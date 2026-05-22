@@ -1,0 +1,45 @@
+@startuml
+skinparam state {
+    BackgroundColor White
+    BorderColor Black
+    ArrowColor Black
+}
+
+' 1. 状态声明：英文ID + 中文显示名
+state "未登录" as logged_out
+state "登录验证中" as authenticating
+state "临时锁定" as locked
+state "账号禁用" as disabled
+state "强制退出" as force_logout
+state "已登录" as logged_in {
+    [*] --> idle
+    state "空闲" as idle
+    state "操作中" as active : 执行各项业务查询\n与管理配置
+}
+
+' 2. 初始与结束
+[*] --> logged_out : 访问系统
+logged_out --> [*] : 关闭页面
+
+' 3. 登录与认证
+logged_out --> authenticating : 输入用户名密码
+authenticating --> logged_out : [密码错误未达阈值]
+authenticating --> locked : [连续5次密码错误]
+authenticating --> disabled : [账号status=disabled]
+authenticating --> locked : [账号locked且未到期]
+authenticating --> logged_in : [验证通过]
+
+' 4. 异常恢复
+locked --> logged_out : 锁定期满自动解封\n或管理员手动解锁
+disabled --> logged_out : 管理员恢复启用
+
+' 5. 已登录内部流转
+idle --> active : 触发业务操作\n(查看股票、管理等)
+active --> idle : 操作完成 / 返回列表
+
+' 6. 退出机制
+logged_in --> logged_out : 主动退出\n或会话超时
+logged_in --> force_logout : 修改密码成功\n或管理员踢出
+force_logout --> logged_out : 清理会话并重定向
+
+@enduml

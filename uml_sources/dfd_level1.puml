@@ -1,0 +1,60 @@
+@startuml
+left to right direction
+skinparam rectangle {
+    BackgroundColor LightGray
+}
+skinparam usecase {
+    BackgroundColor LightBlue
+}
+skinparam database {
+    BackgroundColor LightYellow
+}
+
+rectangle "管理员" as Admin <<外部实体>>
+rectangle "中央交易系统" as CentralSys <<外部实体>>
+rectangle "交易客户端" as Client <<外部实体>>
+
+database "D1 管理员信息库" as D1 <<数据存储>>
+database "D2 操作日志库" as D2 <<数据存储>>
+database "D3 权限配置库" as D3 <<数据存储>>
+
+package "1. 登录管理机制" {
+  usecase "1.1\n身份验证及状态处理" as P1_1 <<处理逻辑>>
+}
+
+package "2. 股票查看操作" {
+  usecase "2.1\n按权限拉取数据" as P2_1 <<处理逻辑>>
+}
+
+package "3. 涨跌停设置模块" {
+  usecase "3.1\n额度配置与合法性校验" as P3_1 <<处理逻辑>>
+}
+
+package "4. 交易控制模块" {
+  usecase "4.1\n暂停及重启控制" as P4_1 <<处理逻辑>>
+}
+
+Admin --> P1_1 : 登录请求\n(用户名+密码+验证码)
+P1_1 --> D1 : 1.查询匹配的账号记录并更新失败次数
+D1 --> P1_1 : 2.返回账号状态(active/locked)和验证结果
+P1_1 --> Admin : 3.会话建立与授权/拒绝访问提示
+
+Admin --> P2_1 : 股票查询请求\n(筛选条件)
+P2_1 --> D3 : 1.查询该管理员ID的股票授权范围
+D3 --> P2_1 : 2.返回可见的授权股票列表
+CentralSys --> P2_1 : 3.推送实时行情数据
+P2_1 --> Admin : 4.返回过滤与排序后的股票明细
+
+Admin --> P3_1 : 涨跌停设置\n(股票代码+涨跌幅等)
+P3_1 --> D3 : 1.校验是否具有该股票管理权限
+D3 --> P3_1 : 2.返回权限确认结果
+P3_1 --> CentralSys : 3.符合法规配置送至中央交易系统
+P3_1 --> D2 : 4.将配置行为写入操作日志
+P3_1 --> Admin : 5.通知设置成功并将于次日生效
+
+Admin --> P4_1 : 交易控制指令\n(暂停/重启+原因)
+P4_1 --> CentralSys : 1.发送暂停/重启交易的执行信号
+P4_1 --> Client : 2.向所有连接的客户端广播状态通知
+P4_1 --> D2 : 3.登记异常处理原因至操作日志库
+P4_1 --> Admin : 4.返回指令下达确认
+@enduml

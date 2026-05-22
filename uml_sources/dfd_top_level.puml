@@ -1,0 +1,29 @@
+@startuml
+left to right direction
+skinparam rectangle {
+    BackgroundColor LightGray
+}
+skinparam usecase {
+    BackgroundColor LightBlue
+}
+
+rectangle "管理员" as Admin <<外部实体>>
+rectangle "中央交易系统" as CentralSys <<外部实体>>
+rectangle "交易客户端" as Client <<外部实体>>
+
+usecase "0\n股票交易后台管理系统" as Sys <<系统>>
+
+Admin --> Sys : 登录请求\n(用户名+密码+验证码)
+Admin --> Sys : 股票查询请求\n(管理员ID+查询条件)
+Admin --> Sys : 涨跌停设置\n(股票代码+涨跌幅)
+Admin --> Sys : 交易控制指令\n(指令类型+原因)
+Admin --> Sys : 审计查询请求\n(筛选条件)
+
+Sys --> Admin : 展示数据与操作结果
+
+CentralSys --> Sys : 实时行情数据\n(股票代码+买卖盘)
+Sys --> CentralSys : 涨跌停配置信号
+Sys --> CentralSys : 暂停/重启控制信号
+
+Sys --> Client : 交易状态广播消息
+@enduml

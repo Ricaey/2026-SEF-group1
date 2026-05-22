@@ -1,0 +1,64 @@
+@startuml
+left to right direction
+skinparam rectangle {
+    BackgroundColor LightGray
+}
+skinparam usecase {
+    BackgroundColor LightBlue
+}
+skinparam database {
+    BackgroundColor LightYellow
+}
+
+rectangle "管理员" as Admin <<外部实体>>
+rectangle "中央交易系统" as CentralSys <<外部实体>>
+rectangle "交易客户端" as Client <<外部实体>>
+
+database "D1_管理员信息库" as D1 <<数据存储>>
+database "D2_操作日志库" as D2 <<数据存储>>
+database "D3_权限配置库" as D3 <<数据存储>>
+
+usecase "1\n登录管理" as P1 <<处理逻辑>>
+usecase "2\n股票查看" as P2 <<处理逻辑>>
+usecase "3\n涨跌停设置" as P3 <<处理逻辑>>
+usecase "4\n交易控制" as P4 <<处理逻辑>>
+usecase "5\n密码管理" as P5 <<处理逻辑>>
+usecase "6\n权限管理" as P6 <<处理逻辑>>
+usecase "7\n审计" as P7 <<处理逻辑>>
+
+Admin --> P1 : 登录请求
+Admin --> P2 : 股票查询请求
+Admin --> P3 : 涨跌停设置
+Admin --> P4 : 交易控制指令
+Admin --> P5 : 密码修改请求
+Admin --> P6 : 权限变更请求
+Admin --> P7 : 审计查询请求
+
+P1 --> D1 : 校验与更新状态
+P1 --> D2 : 写入登录日志
+
+P2 --> D3 : 读取授权范围
+CentralSys --> P2 : 实时行情数据
+
+P3 --> D3 : 权限校验
+P3 --> D2 : 写入操作日志
+P3 --> CentralSys : 发送涨跌停配置
+
+P4 --> D2 : 写入操作日志
+P4 --> CentralSys : 发送暂停/重启信号
+P4 --> Client : 状态广播通知
+
+P5 --> D1 : 验证及更新密码
+P5 --> D2 : 写入操作日志
+
+P6 --> D1 : 更新账号状态
+P6 --> D3 : 更新授权列表
+P6 --> D2 : 写入操作日志
+
+P7 --> D1 : 读取身份信息
+P7 --> D2 : 查询全量日志
+
+P1 --> Admin : 响应与会话建立
+P2 --> Admin : 返回股票信息
+P7 --> Admin : 返回过滤日志
+@enduml
