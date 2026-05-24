@@ -32,13 +32,13 @@
 
 // ==================== 自定义变量（请在此修改） ====================
 
-#let course-code = "SE2023"            // 课程编号
-#let system-name = "项目管理系统"      // 系统名称
-#let subsystem-name = "需求管理子系统" // 子系统名称
+#let course-code = "SE2026"            // 课程编号
+#let system-name = "股票交易系统"      // 系统名称
+#let subsystem-name = "交易系统管理业务" // 子系统名称
 #let doc-title = "需求说明书"          // 文档标题
-#let team-leader = "（待填写）"        // 组长姓名
-#let team-members = ("（待填写）", "（待填写）", "（待填写）") // 组员姓名列表
-#let doc-date = "2026年5月"           // 日期（如 "2025年6月"）
+#let team-leader = "孙米阳"        // 组长姓名
+#let team-members = ("郝建文", "黄中维", "杨佳利", "陆思越") // 组员姓名列表
+#let doc-date = "2026年5月24"           // 日期（如 "2025年6月"）
 #let doc-version = "V1.0"             // 版本号（如 "V1.0"）
 
 // ==================== 辅助函数 ====================
@@ -863,7 +863,9 @@
   columns: (1fr, 1fr),
   [*文件或数据库名*], [operation_log (D2)],
   [*描述*], [记录所有管理员的关键操作行为，用于审计追溯],
-  [*组成*], [log_id + admin_id + operation_type + target_stock + detail + operation_time + operation_result + ip_address],
+  [*组成*],
+  [log_id + admin_id + operation_type + target_stock + detail + operation_time + operation_result + ip_address],
+
   [*相关处理*], [操作日志记录、日志查询、日志筛选],
 )
 
@@ -888,7 +890,9 @@
   [*描述*], [接收管理员登录请求，校验用户名与密码的正确性],
   [*输入数据流*], [登录请求（用户名 + 密码 + 时间戳）],
   [*输出数据流*], [验证结果（通过→会话建立 / 失败→错误提示 / 锁定→拒绝与剩余时间 / 禁用→拒绝）],
-  [*存取的数据库*], [D1 管理员信息库（读取及更新`status`、`failed_attempts`、`lock_until`）, D2 操作日志库(记录登陆记录)],
+  [*存取的数据库*],
+  [D1 管理员信息库（读取及更新`status`、`failed_attempts`、`lock_until`）, D2 操作日志库(记录登陆记录)],
+
   [*处理逻辑*],
   [
     1. 查询 D1 获取该`username`对应的账号记录, 若未找到对应账号记录, 则提示账号不存在；2. 若`status` = `disabled`，直接拒绝登录；3. 若 `status` = `locked` 且当前时间 < `lock_until`，拒绝登录并提示剩余锁定时间；4. 若 `status` = `locked` 且当前时间 ≥ `lock_until`，自动将 `status` 置为 `active`，清零 `failed_attempts`，继续校验密码；5. 校验密码：成功则清零 `failed_attempts`，创建会话；失败则 `failed_attempts` 自增，达到阈值 5 时将 `status` 置为 `locked`，`lock_until` = 当前时间 + 5 分钟，拒绝登录; 6. 记录登陆成功或失败日志
@@ -968,7 +972,9 @@
   [*描述*], [接收系统管理员的权限调整请求，更新管理员角色或授权范围],
   [*输入数据流*], [管理员ID + 目标管理员ID + 调整类型 + 新角色/授权范围/状态],
   [*输出数据流*], [调整结果（成功/失败 + 错误提示）],
-  [*存取的数据库*], [D1 管理员信息库（查询请求的管理员角色以及更新角色或状态）, D3 权限配置库（更新授权范围）, D2 操作日志库（写入）],
+  [*存取的数据库*],
+  [D1 管理员信息库（查询请求的管理员角色以及更新角色或状态）, D3 权限配置库（更新授权范围）, D2 操作日志库（写入）],
+
   [*处理逻辑*],
   [
     1. 查询D1校验请求管理员是否为系统管理员; 2. 根据调整类型更新 D1 中的角色或状态字段，或更新 D3 中的授权股票范围; 3. 向 D2 写入操作日志
@@ -983,7 +989,9 @@
   [*处理表示*], [P7_1（DFD 1层图，审计包）],
   [*描述*], [接收审计管理员的日志查询请求，返回符合筛选条件的操作日志记录],
   [*输入数据流*], [管理员ID + 筛选条件],
-  [*输出数据流*], [操作日志列表（log_id + admin_id + operation_type + target_stock + detail + operation_time + operation_result + ip_address）],
+  [*输出数据流*],
+  [操作日志列表（log_id + admin_id + operation_type + target_stock + detail + operation_time + operation_result + ip_address）],
+
   [*存取的数据库*], [D1 管理员信息库（读取）, D2 操作日志库（读取）],
   [*处理逻辑*],
   [
