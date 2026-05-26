@@ -148,7 +148,7 @@
 
 + 在需求规格说明书（SRS）的基础上，将需求转化为系统的体系结构，划分出系统的基本组成模块；
 + 定义各模块的内部处理逻辑、数据结构与接口规范，为后续的详细设计与编码实现提供依据；
-+ 根据跨组接口约定（接口V2.md），明确本子系统与中央交易系统（TRADE）、账户业务子系统（ACCOUNT）等外部系统的交互方式；
++ 根据跨组接口约定（接口V2.md），明确本子系统与中央交易系统（TRADE）的交互方式；
 + 设计系统的数据库结构、用户界面与运行部署方案。
 
 == 文档范围
@@ -212,7 +212,7 @@
 #v(0.3em)
 #dl-field("用户群", "股票交易所内部管理员（普通管理员、高级管理员、系统管理员、审计管理员）")
 #v(0.3em)
-#dl-field("外部交互系统", "中央交易系统（TRADE）、账户业务子系统（ACCOUNT）")
+#dl-field("外部交互系统", "中央交易系统（TRADE）")
 
 == 项目背景
 
@@ -237,7 +237,7 @@
 + *系统管理员（SYSTEM_ADMIN）*：负责管理员账号的创建、角色分配、授权股票范围配置及账号状态管理（解锁、禁用、恢复启用）。
 + *审计管理员（AUDIT_ADMIN）*：具有只读权限，查看全局操作日志与登录日志，支持按管理员、时间范围、操作类型筛选。
 
-系统共划分为八个功能模块：登录管理、股票查看、涨跌停设置、交易控制、交易日管理、密码管理、权限管理、审计。
+系统共划分为七个功能模块：登录管理、股票查看、涨跌停设置、交易控制（含交易日管理）、密码管理、权限管理、审计。
 
 === 性能需求
 
@@ -266,8 +266,7 @@
 
 === 外部依赖
 
-+ 本子系统通过 HTTP 接口调用中央交易系统（TRADE）获取行情数据、订单簿数据，发送涨跌停配置、暂停/重启指令及交易日控制信号；
-+ 本子系统可调用账户业务子系统（ACCOUNT）查询管理员关联的投资者账户信息（如需）。
++ 本子系统通过 HTTP 接口调用中央交易系统（TRADE）获取行情数据、订单簿数据，发送涨跌停配置、暂停/重启指令及交易日控制信号。ADMIN 子系统无需调用 ACCOUNT（管理员非投资者，无需资金/证券账户操作），仅通过 TRADE 的 API 与交易生态交互。第一版行情获取采用每 5 秒 REST 轮询。
 
 === 约束限制
 
@@ -290,7 +289,7 @@
 + *路由层（Router）*：接收 HTTP 请求，参数校验，调用服务层。
 + *服务层（Service）*：实现核心业务逻辑，协调内部模块与外部 API 调用。
 + *数据访问层（Repository）*：封装数据库 CRUD 操作，通过 SQLAlchemy ORM 访问 MySQL。
-+ *外部接口层（Client）*：封装对 TRADE、ACCOUNT 等外部系统的 HTTP 调用。
++ *外部接口层（Client）*：封装对 TRADE 外部系统的 HTTP 调用。
 
 前后端通过 RESTful API（JSON over HTTP）通信，管理员认证采用 JWT Bearer Token。实时行情数据通过 TRADE WebSocket 获取或 REST 轮询（每 5 秒）。
 
@@ -298,27 +297,26 @@
 
 系统核心业务流程如下：
 
-+ *交易日启动*：高级管理员通过 ADMIN 前端发起交易日开始指令 → ADMIN 后端调用 TRADE `POST /trading-days/open` → TRADE 启动撮合引擎。
-+ *管理员登录*：管理员输入用户名、密码及验证码 → ADMIN 后端校验账号状态与密码 → 返回 JWT 令牌及角色与授权范围 → 前端根据角色展示对应功能菜单。
++ *管理员登录*：管理员输入用户名与密码 → ADMIN 后端校验账号状态与密码 → 返回 JWT 令牌及角色与授权范围 → 前端根据角色展示对应功能菜单。
 + *股票查看*：管理员进入股票查看界面 → ADMIN 后端从数据库读取授权范围 → 调用 TRADE `/market` 批量获取实时行情 → 前端展示。
 + *涨跌停设置*：高级管理员提交涨跌停比例 → ADMIN 后端校验权限与授权范围 → 调用 TRADE `PUT /stocks/{code}/limits` 传递比例 → TRADE 计算最终价格限制并返回 → 管理员确认次日生效。
 + *交易控制*：高级管理员发起暂停/重启 → ADMIN 后端校验权限 → 调用 TRADE 对应暂停/重启接口 → TRADE 执行操作并通过 WebSocket 广播状态变更 → ADMIN 记录审计日志。
-+ *交易日结束*：高级管理员发起交易日结束指令 → ADMIN 后端调用 TRADE `POST /trading-days/close` → TRADE 停止撮合、过期未成交指令、释放冻结资源、归档行情。
++ *交易日管理*：高级管理员在交易控制模块内发起交易日开始/结束指令 → ADMIN 后端调用 TRADE `POST /trading-days/open` 或 `/close` → TRADE 启动/停止撮合引擎、过期未成交指令、释放冻结资源、归档行情。
 
 == 功能 IPO 图
 
 系统的顶层 IPO 模型描述了主要的输入数据、核心处理功能和输出数据：
 
-+ *Input（输入）*：管理员登录凭证（用户名 + 密码 + 验证码）、股票查询条件（代码/名称/板块）、涨跌停比例（涨幅比例 + 跌幅比例 + 生效日期）、交易控制指令（暂停/重启 + 原因）、交易日控制指令、密码修改请求、权限调整请求（角色/授权范围/状态）、审计查询条件（管理员/时间范围/操作类型）。
-+ *Process（处理）*：登录认证与角色识别、授权范围读取、行情数据聚合（调用TRADE接口）、涨跌停比例设置与转发（调用TRADE计算）、交易控制指令转发与状态广播、交易日开始/结束信号发送、密码强度校验与更新、角色与授权范围配置、操作与登录日志审计。
-+ *Output（输出）*：认证结果与 JWT 令牌、股票列表与实时行情、涨跌停配置确认（含 TRADE 计算的价格限制）、交易控制状态、交易日状态、密码修改结果、权限调整记录、审计日志列表。
++ *Input（输入）*：管理员登录凭证（用户名 + 密码）、股票查询条件（代码/名称/板块）、涨跌停比例（涨幅比例 + 跌幅比例 + 生效日期）、交易控制指令（暂停/重启/交易日开始/交易日结束 + 原因）、密码修改请求、权限调整请求（角色/授权范围/状态）、审计查询条件（管理员/时间范围/操作类型）。
++ *Process（处理）*：登录认证与角色识别、授权范围读取、行情数据聚合（调用TRADE接口）、涨跌停比例设置与转发（调用TRADE计算）、交易控制与交易日管理指令转发与状态广播、密码强度校验与更新、角色与授权范围配置、操作与登录日志审计。
++ *Output（输出）*：认证结果与 JWT 令牌、股票列表与实时行情、涨跌停配置确认（含 TRADE 计算的价格限制）、交易控制与交易日状态、密码修改结果、权限调整记录、审计日志列表。
 
 // （占用位，后续插入顶层IPO图）
 // #image("ipo_top.png", width: 95%)
 
 == 系统结构
 
-系统划分为以下八个功能模块：
+系统划分为以下七个功能模块：
 
 #table(
   columns: (0.08fr, 0.2fr, 0.42fr, 0.3fr),
@@ -326,21 +324,19 @@
   [M1], [登录管理模块], [管理员身份验证、会话创建与管理、登录失败锁定与自动解锁。], [无（纯内部模块）],
   [M2], [股票查看模块], [按授权范围展示股票列表、实时行情与交易明细，支持搜索筛选与排序。], [TRADE: 行情查询、订单簿查询],
   [M3], [涨跌停设置模块], [管理股票涨跌幅比例的单只与批量设置，调用 TRADE 完成价格计算，次日生效。], [TRADE: 涨跌停比例设置],
-  [M4], [交易控制模块], [执行股票的暂停与重启撮合操作，调用 TRADE 执行并触发广播。], [TRADE: 暂停/重启指令],
-  [M5], [交易日管理模块], [发起交易日开始与结束信号，调用 TRADE 执行启停。], [TRADE: 交易日开始/结束],
-  [M6], [密码管理模块], [管理员密码修改、强度校验与修改成功后强制重新登录。], [无（纯内部模块）],
-  [M7], [权限管理模块], [管理各管理员的角色分配、授权股票范围与账号状态配置。], [无（纯内部模块）],
-  [M8], [审计模块], [提供全局操作日志与登录日志的查看、筛选与导出，满足合规留痕。], [无（纯内部模块）],
+  [M4], [交易控制模块], [执行股票的暂停/重启撮合操作与交易日开始/结束，调用 TRADE 执行并触发广播。], [TRADE: 暂停/重启、交易日管理],
+  [M5], [密码管理模块], [管理员密码修改、强度校验与修改成功后强制重新登录。], [无（纯内部模块）],
+  [M6], [权限管理模块], [管理各管理员的角色分配、授权股票范围与账号状态配置。], [无（纯内部模块）],
+  [M7], [审计模块], [提供全局操作日志与登录日志的查看、筛选与导出，满足合规留痕。], [无（纯内部模块）],
 )
 
 模块间依赖关系：
 
-+ M2（股票查看）依赖 M7（权限管理）获取授权范围，依赖 TRADE 获取行情数据；
-+ M3（涨跌停设置）依赖 M7（权限管理）校验管理权限，依赖 TRADE 计算价格限制；
-+ M4（交易控制）依赖 M7（权限管理）校验管理权限，依赖 TRADE 执行控制指令；
-+ M5（交易日管理）依赖 TRADE 执行交易日启停；
-+ M7（权限管理）仅系统管理员可访问；
-+ M8（审计模块）仅审计管理员可访问。
++ M2（股票查看）依赖 M6（权限管理）获取授权范围，依赖 TRADE 获取行情数据；
++ M3（涨跌停设置）依赖 M6（权限管理）校验管理权限，依赖 TRADE 计算价格限制；
++ M4（交易控制）依赖 M6（权限管理）校验管理权限，依赖 TRADE 执行暂停/重启及交易日启停；
++ M6（权限管理）仅系统管理员可访问；
++ M7（审计模块）仅审计管理员可访问。
 
 // （占用位，后续插入系统结构图）
 // #image("module_structure.png", width: 90%)
@@ -360,7 +356,7 @@
   [数据库迁移], [Alembic], [与 SQLAlchemy 集成，版本化数据库变更],
   [认证], [python-jose (JWT)], [无状态令牌，适合分布式部署],
   [密码加密], [bcrypt], [抗暴力破解，业界标准],
-  [HTTP 客户端], [httpx (异步)], [用于调用 TRADE、ACCOUNT 外部 API],
+  [HTTP 客户端], [httpx (异步)], [用于调用 TRADE 外部 API],
   [前端框架], [Vue 3 + Element Plus], [组件化开发，丰富的管理后台组件],
   [版本控制], [Git], [分布式版本控制],
   [绘图工具], [draw.io / PlantUML], [支持 UML 图与流程图],
@@ -368,7 +364,7 @@
 
 == 部署图
 
-系统采用典型的 Web 应用部署架构。ADMIN 子系统部署在应用服务器上，通过 HTTP 协议与 TRADE、ACCOUNT 子系统通信，通过 WebSocket 接收 TRADE 实时推送。
+系统采用典型的 Web 应用部署架构。ADMIN 子系统部署在应用服务器上，通过 HTTP 协议与 TRADE 子系统通信，第一版采用 REST 轮询获取行情。
 
 #table(
   columns: (0.2fr, 0.25fr, 0.2fr, 0.35fr),
@@ -376,8 +372,7 @@
   [ADMIN 前端（Vue 3）], [Nginx 静态资源 + 浏览器], [80/443], [Nginx 作为反向代理与静态资源服务器],
   [ADMIN 后端（FastAPI）], [应用服务器], [8000], [处理业务逻辑，调用外部 API],
   [MySQL（admin_db）], [数据库服务器], [3306], [存储管理员信息、操作日志、权限配置],
-  [TRADE 服务], [交易服务器], [8001], [外部依赖，通过 HTTP + WebSocket 交互],
-  [ACCOUNT 服务], [账户服务器], [8002], [外部依赖，按需调用],
+  [TRADE 服务], [交易服务器], [8001], [外部依赖，通过 HTTP 交互（第一版 REST 轮询行情）],
 )
 
 // （占用位，后续插入部署图）
@@ -389,7 +384,7 @@
 
 === 实体类（Model）
 
-+ *Admin*：管理员实体，属性包含 admin_id, username, password_hash, role_type, status, failed_attempts, lock_until, created_at, last_login。
++ *Admin*：管理员实体，属性包含 admin_id, username, password_hash, role_type, status, failed_attempts, lock_until, token_version, created_at, last_login。
 + *OperationLog*：操作日志实体，属性包含 log_id, admin_id, operation_type, target_stock, detail, operation_result, operation_time, ip_address。
 + *PermissionConfig*：权限配置实体，属性包含 config_id, admin_id, authorized_stocks (JSON), updated_by, updated_at。
 + *LoginLog*：登录日志实体，属性包含 login_log_id, admin_id, login_time, logout_time, login_result, fail_reason, ip_address, session_id。
@@ -405,8 +400,7 @@
 
 === 外部接口类（Client）
 
-+ *TradeClient*：封装对 TRADE HTTP API 的调用（行情、订单簿、涨跌停、暂停/重启、交易日管理）及 WebSocket 连接管理。
-+ *AccountClient*：封装对 ACCOUNT HTTP API 的调用（按需查询账户信息）。
++ *TradeClient*：封装对 TRADE HTTP API 的调用（行情、订单簿、涨跌停、暂停/重启、交易日管理），第一版以 REST 轮询代替 WebSocket 连接。
 
 // （占用位，后续插入类图）
 // #image("class_diagram.png", width: 90%)
@@ -450,7 +444,8 @@ ADMIN 子系统对外暴露以下 RESTful API（基础前缀 `/api/v1/admin`）�
   [POST], [/trading-days/close], [发起交易日结束（调用 TRADE）],
   [GET], [/admins], [查看所有管理员账号与权限（仅系统管理员）],
   [PUT], [/admins/{admin_id}/permissions], [调整管理员角色、授权范围或状态（仅系统管理员）],
-  [GET], [/audit/logs?filters...], [查询操作日志与登录日志（仅审计管理员）],
+  [GET], [/audit/operation-logs?filters...], [查询操作日志（仅审计管理员）],
+  [GET], [/audit/login-logs?filters...], [查询登录日志（仅审计管理员）],
 )
 
 === 外部接口（ADMIN 调用的 TRADE API）
@@ -479,7 +474,7 @@ ADMIN 调用 TRADE 的接口（基础前缀 `/api/v1/trade`）：
 
 == 顺序图
 
-顺序图描述各核心业务流程中 ADMIN 前端、ADMIN 后端、数据库及外部系统（TRADE、ACCOUNT）之间的消息交互序列。
+顺序图描述各核心业务流程中 ADMIN 前端、ADMIN 后端、数据库及外部系统（TRADE）之间的消息交互序列。
 
 === 管理员登录认证流程
 
@@ -488,7 +483,7 @@ ADMIN 调用 TRADE 的接口（基础前缀 `/api/v1/trade`）：
 
 交互序列：
 
-+ 管理员在浏览器输入用户名、密码、验证码，提交 POST `/api/v1/admin/auth/login`；
++ 管理员在浏览器输入用户名与密码，提交 POST `/api/v1/admin/auth/login`；
 + ADMIN 后端查询 MySQL `admin_info` 表，校验账号状态（active / locked / disabled）；
 + 若账号不可用，返回 401/403 错误并记录登录失败日志；
 + 若账号可用，bcrypt 校验密码；失败则累加 `failed_attempts`，达到 5 次锁定 5 分钟；
@@ -549,25 +544,10 @@ ADMIN 调用 TRADE 的接口（基础前缀 `/api/v1/trade`）：
 + TRADE 将股票状态恢复为 `OPEN`，通过 WebSocket 广播 `stock.resumed` 事件；
 + ADMIN 后端写入操作日志，返回操作结果。
 
-=== 交易日管理流程
+交互序列（交易日管理）：
 
-// （占用位，后续插入顺序图）
-// #image("sequence_trading_day.png", width: 85%)
-
-交互序列（交易日开始）：
-
-+ 高级管理员在交易日开始时（如同一至周五 9:00），提交 POST `/api/v1/admin/trading-days/open`；
-+ ADMIN 后端校验角色为 SENIOR_ADMIN；
-+ ADMIN 后端调用 TRADE `POST /api/v1/trade/trading-days/open`，传递 `trade_date` 与 `operator_admin_id`；
-+ TRADE 启动当日撮合引擎，将股票状态初始化为 `OPEN`；
-+ ADMIN 后端写入操作日志，返回交易日开启确认。
-
-交互序列（交易日结束）：
-
-+ 高级管理员在交易日结束时（如 15:00）或系统定时任务触发，提交 POST `/api/v1/admin/trading-days/close`；
-+ ADMIN 后端调用 TRADE `POST /api/v1/trade/trading-days/close`；
-+ TRADE 执行收盘流程：拒绝新指令、将排队中及部分成交剩余数量标记为过期、生成过期反馈、向 ACCOUNT 释放剩余冻结资金/证券、归档当日行情；
-+ ADMIN 后端写入操作日志，返回交易日结束确认。
++ *交易日开始*：高级管理员在交易日开始时（如周一至周五 9:00），提交 POST `/api/v1/admin/trading-days/open`；ADMIN 后端校验角色后调用 TRADE `POST /api/v1/trade/trading-days/open`；TRADE 启动撮合引擎；ADMIN 后端写入操作日志。
++ *交易日结束*：高级管理员在交易日结束时（如 15:00）或系统定时任务触发，提交 POST `/api/v1/admin/trading-days/close`；ADMIN 后端调用 TRADE `POST /api/v1/trade/trading-days/close`；TRADE 停止撮合、过期未成交指令、释放冻结资源、归档行情；ADMIN 后端写入操作日志。
 
 === 权限管理流程
 
@@ -587,10 +567,9 @@ ADMIN 调用 TRADE 的接口（基础前缀 `/api/v1/trade`）：
 
 交互序列：
 
-+ 审计管理员进入审计界面，前端发送 GET `/api/v1/admin/audit/logs?filters...`；
-+ ADMIN 后端校验角色为 AUDIT_ADMIN（或 SYSTEM_ADMIN）；
-+ 根据筛选条件（admin_id, operation_type, start_time, end_time）查询 `operation_log` 与 `login_log` 表；
-+ 返回分页的日志列表；
++ 审计管理员进入审计界面，前端可通过两个 Tab 切换操作日志与登录日志；
++ *操作日志*：前端发送 GET `/api/v1/admin/audit/operation-logs?filters...`；ADMIN 后端校验角色为 AUDIT_ADMIN（或 SYSTEM_ADMIN）；根据筛选条件查询 `operation_log` 表，返回分页列表。
++ *登录日志*：前端发送 GET `/api/v1/admin/audit/login-logs?filters...`；ADMIN 后端按条件查询 `login_log` 表，返回分页列表。
 + 支持导出日志文件（CSV 格式）。
 
 == 执行概念
@@ -599,11 +578,10 @@ ADMIN 调用 TRADE 的接口（基础前缀 `/api/v1/trade`）：
 
 执行步骤：
 
-+ 管理员输入用户名、密码和验证码（4 位数字），提交登录请求；
-+ 后端先在 Redis/内存中校验验证码正确性（如使用）；
++ 管理员输入用户名与密码，提交登录请求；
 + 查询 `admin_info` 表获取账号记录，若不存在则返回"账号不存在"；
 + 检查 `status` 字段：若 `disabled`，返回"账户已被禁用"；若 `locked` 且未到 `lock_until`，返回"账户已锁定，剩余 X 分 Y 秒"；若 `locked` 且已到解锁时间，自动将 `status` 恢复为 `active`，`failed_attempts` 清零；
-+ bcrypt 校验密码哈希：成功则生成 JWT 令牌（payload 含 admin_id, role, exp），返回角色与授权范围，记录登录成功日志；失败则 `failed_attempts += 1`，若达 5 次则将 `status` 设为 `locked`，`lock_until = now + 5分钟`，返回错误提示并记录失败日志。
++ bcrypt 校验密码哈希：成功则生成 JWT 令牌（payload 含 admin_id, role, exp, token_version），返回角色与授权范围，记录登录成功日志；失败则 `failed_attempts += 1`，若达到 5 次则将 `status` 设为 `locked`，`lock_until = now + 5分钟`，返回错误提示并记录失败日志。
 
 === 涨跌停设置执行逻辑
 
@@ -621,9 +599,9 @@ ADMIN 调用 TRADE 的接口（基础前缀 `/api/v1/trade`）：
 
 === 交易控制执行逻辑
 
-关键设计：ADMIN 发送控制信号，TRADE 执行具体操作并通过 WebSocket 广播。
+关键设计：ADMIN 发送控制信号（含交易日管理），TRADE 执行具体操作并通过 WebSocket 广播。
 
-执行步骤：
+执行步骤（暂停/重启）：
 
 + 高级管理员选择目标股票（支持多只），若暂停需填写原因；
 + ADMIN 后端校验角色与权限；
@@ -632,9 +610,7 @@ ADMIN 调用 TRADE 的接口（基础前缀 `/api/v1/trade`）：
 + TRADE 通过 WebSocket (`/api/v1/trade/ws/market`) 广播 `stock.paused` 或 `stock.resumed` 事件，CLIENT、INFO 等订阅方收到后更新本地状态；
 + ADMIN 后端写入操作日志（含操作类型、股票代码、原因、操作时间与 IP）。
 
-=== 交易日管理执行逻辑
-
-执行步骤：
+执行步骤（交易日管理，属于交易控制模块的子功能）：
 
 + *开始*：高级管理员在交易日开始时调用 `POST /trading-days/open`；ADMIN 后端调用 TRADE 同名接口；TRADE 启动撮合引擎，将所有股票状态初始化为 `OPEN`。
 + *结束*：高级管理员手动或系统定时任务触发 `POST /trading-days/close`；TRADE 停止接收新指令，将所有 `QUEUED` 和 `PARTIALLY_FILLED` 指令标记为 `EXPIRED`，生成过期反馈，向 ACCOUNT 发送释放剩余冻结资源请求，归档当日行情数据。
@@ -643,8 +619,8 @@ ADMIN 调用 TRADE 的接口（基础前缀 `/api/v1/trade`）：
 
 + 管理员输入原密码、新密码及确认密码；
 + ADMIN 后端校验原密码正确性，校验新密码格式（长度 ≥ 8、含大小写字母/数字/特殊字符至少三类）且两次输入一致；
-+ 更新 `admin_info` 表中 `password_hash` 字段；
-+ 将当前 JWT 令牌加入黑名单（或直接要求前端清除），强制重新登录；
++ 更新 `admin_info` 表中 `password_hash` 字段，同时递增 `token_version` 字段使所有旧 JWT 失效；
++ 强制前端清除令牌并跳转至登录界面；
 + 写入操作日志。
 
 === 权限管理执行逻辑
@@ -672,8 +648,8 @@ ADMIN 调用 TRADE 的接口（基础前缀 `/api/v1/trade`）：
 
 === 登录界面
 
-+ 居中登录卡片，包含用户名输入框、密码输入框、4 位验证码输入框及验证码图片；
-+ 登录按钮与"忘记密码"链接（本项目暂不实现找回密码功能，由系统管理员负责解锁/重置）；
++ 居中登录卡片，包含用户名输入框与密码输入框；
++ 登录按钮（验证码作为后续 bonus 功能实现）；
 + 登录失败时显示错误提示（用户名或密码错误 / 账户已锁定 X 分 Y 秒 / 账户已禁用）。
 
 // （占用位，后续插入登录界面原型）
@@ -682,7 +658,7 @@ ADMIN 调用 TRADE 的接口（基础前缀 `/api/v1/trade`）：
 === 股票查看主界面
 
 + 顶部：导航栏（系统名称、当前管理员信息、退出按钮）；
-+ 左侧：功能菜单（股票查看、涨跌停设置、交易控制、交易日管理、密码修改、权限管理、审计日志——根据角色显示）；
++ 左侧：功能菜单（股票查看、涨跌停设置、交易控制、密码修改、权限管理、审计日志——根据角色显示）；
 + 主区域：股票列表（表格：代码、名称、类型、最新价、涨跌幅、成交量、状态），支持关键字搜索与板块筛选；
 + 点击某只股票：展开买卖盘详情（买盘降序、卖盘升序），每档显示价格、数量、时间。
 
@@ -701,21 +677,20 @@ ADMIN 调用 TRADE 的接口（基础前缀 `/api/v1/trade`）：
 
 === 交易控制界面
 
+交易控制界面包含两个操作区（通过 Tab 切换）：
+
+*交易暂停/重启区*：
 + 股票选择区：下拉选择可管理的股票；
 + 操作区：暂停按钮（点击后弹出暂停原因输入弹窗）、重启按钮（已暂停的股票才可用）；
 + 状态展示：当前股票的交易状态（OPEN / PAUSED / CLOSED），使用不同颜色标识。
 
-// （占用位，后续插入交易控制界面原型）
-// #image("ui_trade_control.png", width: 80%)
-
-=== 交易日管理界面
-
+*交易日管理区*（仅 SENIOR_ADMIN 可见）：
 + 当前交易日状态显示（已开始/已结束）；
-+ 交易日开始按钮（仅 SENIOR_ADMIN 可见，仅在未开始时可用）；
++ 交易日开始按钮（仅在未开始时可用）；
 + 交易日结束按钮（仅在已开始时可用，点击前二次确认）。
 
-// （占用位，后续插入交易日管理界面原型）
-// #image("ui_trading_day.png", width: 65%)
+// （占用位，后续插入交易控制界面原型）
+// #image("ui_trade_control.png", width: 80%)
 
 === 权限管理界面
 
@@ -749,13 +724,13 @@ ADMIN 调用 TRADE 的接口（基础前缀 `/api/v1/trade`）：
 页面流转规则（基于 RBAC）：
 
 + 所有管理员从登录页进入，登录成功后根据 `role` 字段跳转：
-  - NORMAL_ADMIN → 股票查看主界面（仅可见 M2, M6 菜单项）；
-  - SENIOR_ADMIN → 股票查看主界面（可见 M2, M3, M4, M5, M6 菜单项）；
-  - SYSTEM_ADMIN → 权限管理界面（可见 M7, M6 菜单项）；
-  - AUDIT_ADMIN → 审计日志界面（可见 M8, M6 菜单项）；
-+ 所有角色均可通过导航栏右上角进入密码修改（M6）；
+  - NORMAL_ADMIN → 股票查看主界面（仅可见 M2, M5 菜单项）；
+  - SENIOR_ADMIN → 股票查看主界面（可见 M2, M3, M4（含交易日管理）, M5 菜单项）；
+  - SYSTEM_ADMIN → 权限管理界面（可见 M6, M5 菜单项）；
+  - AUDIT_ADMIN → 审计日志界面（可见 M7, M5 菜单项）；
++ 所有角色均可通过导航栏右上角进入密码修改（M5）；
 + 会话超时（JWT 过期）后前端自动清除令牌并跳转至登录界面；
-+ 密码修改成功后强制跳转至登录界面。
++ 密码修改成功后（`token_version` 自增使所有旧令牌失效）强制跳转至登录界面。
 
 // （占用位，后续插入页面流转图）
 // #image("page_flow.png", width: 90%)
@@ -772,8 +747,8 @@ ADMIN 调用 TRADE 的接口（基础前缀 `/api/v1/trade`）：
 
 ADMIN 子系统独立维护以下四个实体（仅存储本子系统所需数据，股票行情、交易指令等数据通过 TRADE API 获取）：
 
-+ *管理员（Admin）*：属性包括管理员ID、用户名、密码哈希、角色类型（NORMAL_ADMIN / SENIOR_ADMIN / SYSTEM_ADMIN / AUDIT_ADMIN）、账号状态（active / locked / disabled）、失败计数、锁定截止时间、创建时间、最近登录时间。
-+ *操作日志（OperationLog）*：属性包括日志ID、管理员ID、操作类型（LOGIN / QUERY / LIMIT_SET / TRADE_CONTROL / TRADING_DAY / PASSWORD / PERMISSION / ACCOUNT_STATUS）、目标股票代码、操作详情、操作结果、操作时间、IP地址。
++ *管理员（Admin）*：属性包括管理员ID、用户名、密码哈希、角色类型（NORMAL_ADMIN / SENIOR_ADMIN / SYSTEM_ADMIN / AUDIT_ADMIN）、账号状态（active / locked / disabled）、失败计数、锁定截止时间、令牌版本号（token_version，密码修改/禁用时自增）、创建时间、最近登录时间。
++ *操作日志（OperationLog）*：属性包括日志ID、管理员ID、操作类型（LOGIN / QUERY / LIMIT_SET / TRADE_CONTROL / TRADING_DAY / PASSWORD / PERMISSION / ADMIN_STATUS）、目标股票代码、操作详情、操作结果、操作时间、IP地址。
 + *权限配置（PermissionConfig）*：属性包括配置ID、管理员ID、授权股票代码列表（JSON 数组）、最近修改者ID、最近修改时间。
 + *登录日志（LoginLog）*：属性包括日志ID、管理员ID、登录时间、登出时间、登录结果、失败原因、IP地址、会话ID。
 
@@ -805,10 +780,11 @@ ADMIN 子系统独立维护以下四个实体（仅存储本子系统所需数�
   [3], [password_hash], [VARCHAR], [256], [], [密码哈希值，bcrypt 加密存储],
   [4], [role_type], [TINYINT], [1], [], [角色：0=NORMAL_ADMIN, 1=SENIOR_ADMIN, 2=SYSTEM_ADMIN, 3=AUDIT_ADMIN],
   [5], [status], [VARCHAR], [10], [], [账号状态：active / locked / disabled],
-  [6], [failed_attempts], [INT], [1], [], [连续登录失败次数，默认 0，范围 0-5],
+  [6], [failed_attempts], [INT], [1], [], [连续登录失败次数，默认 0，达到 5 触发锁定],
   [7], [lock_until], [DATETIME], [], [], [锁定截止时间，NULL 表示未锁定],
-  [8], [created_at], [DATETIME], [], [], [账号创建时间，默认 CURRENT_TIMESTAMP],
-  [9], [last_login], [DATETIME], [], [], [最近一次登录成功时间],
+  [8], [token_version], [INT], [4], [], [令牌版本号，默认 1；密码修改/账号禁用时自增使所有旧 JWT 失效],
+  [9], [created_at], [DATETIME], [], [], [账号创建时间，默认 CURRENT_TIMESTAMP],
+  [10], [last_login], [DATETIME], [], [], [最近一次登录成功时间],
 )
 
 === 操作日志表（operation_log）
@@ -818,7 +794,7 @@ ADMIN 子系统独立维护以下四个实体（仅存储本子系统所需数�
   [*序号*], [*字段名*], [*类型*], [*长度*], [*主键*], [*说明*],
   [1], [log_id], [INT], [8], [是], [日志唯一标识，自增主键],
   [2], [admin_id], [INT], [8], [], [操作管理员ID，外键 REFERENCES admin_info(admin_id)],
-  [3], [operation_type], [VARCHAR], [20], [], [操作类型：LOGIN / QUERY / LIMIT_SET / TRADE_CONTROL / TRADING_DAY / PASSWORD / PERMISSION / ACCOUNT_STATUS],
+  [3], [operation_type], [VARCHAR], [20], [], [操作类型：LOGIN / QUERY / LIMIT_SET / TRADE_CONTROL / TRADING_DAY / PASSWORD / PERMISSION / ADMIN_STATUS],
   [4], [target_stock], [VARCHAR], [6], [], [操作目标股票代码，非股票操作时为空],
   [5], [detail], [VARCHAR], [512], [], [操作详细描述（含变更前后值、原因等）],
   [6], [operation_result], [TINYINT], [1], [], [操作结果：0=失败，1=成功],
@@ -901,7 +877,7 @@ ADMIN 子系统独立维护以下四个实体（仅存储本子系统所需数�
   [Python], [3.11+],
   [数据库], [MySQL 8.0.32+],
   [Web 服务器], [Nginx 1.20+（反向代理 + 静态资源）],
-  [网络], [千兆以太网，与其他子系统（TRADE、ACCOUNT）内网互通],
+  [网络], [千兆以太网，与 TRADE 子系统内网互通],
 )
 
 === 客户端环境
@@ -969,7 +945,7 @@ ADMIN 子系统独立维护以下四个实体（仅存储本子系统所需数�
   [422], [ADMIN_VALIDATION_ERROR], [数据校验失败], [密码强度不足、涨跌停比例超出合法范围、生效日期早于当日。],
   [429], [ADMIN_RATE_LIMITED], [请求过于频繁], [登录失败次数过多被临时锁定，或 API 调用超过限流阈值。],
   [500], [COMMON_INTERNAL_ERROR], [服务器内部错误], [未预期的运行时异常，后端记录完整 traceback，返回通用错误提示。],
-  [502], [ADMIN_UPSTREAM_ERROR], [上游服务错误], [调用 TRADE 或 ACCOUNT 接口失败（超时/5xx），返回"外部服务暂不可用"。],
+  [502], [ADMIN_UPSTREAM_ERROR], [上游服务错误], [调用 TRADE 接口失败（超时/5xx），返回"外部服务暂不可用"。],
   [503], [COMMON_SERVICE_UNAVAILABLE], [服务不可用], [系统维护中或数据库连接失败。],
 )
 
