@@ -1,0 +1,35 @@
+@startuml deployment
+skinparam backgroundColor transparent
+skinparam defaultFontName Microsoft YaHei
+skinparam nodeBorderThickness 2
+
+title 系统部署图
+
+node "客户端" as client {
+  component "浏览器\n(Vue 3 + Element Plus)" as browser
+}
+
+node "Web服务器 (Nginx)\n端口: 80/443" as nginx {
+  component "静态资源\n(Vue Build)" as static
+  component "反向代理\n/api/v1/admin → :8000" as proxy
+}
+
+node "应用服务器\n端口: 8000" as app {
+  component "ADMIN 后端\n(FastAPI + Uvicorn)" as admin_backend
+  component "TradeClient\n(httpx 异步)" as trade_cli
+}
+
+node "数据库服务器\n端口: 3306" as db_server {
+  database "admin_db\n(MySQL 8.0)" as mysql
+}
+
+cloud "中央交易系统 (TRADE)" as trade {
+  node "TRADE 服务\n端口: 8001" as trade_svc
+}
+
+browser -right-> nginx : HTTPS
+nginx -down-> app : HTTP
+admin_backend -down-> db_server : SQLAlchemy
+admin_backend -right-> trade : "REST API\n(行情/交易控制/交易日)"
+trade_svc -up-> app : "WebSocket\n(后续优化)"
+@enduml

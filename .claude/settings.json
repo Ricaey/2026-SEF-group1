@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "additionalDirectories": [
+      "D:\\mingw64\\bin",
+      "D:\\Git\\cmd"
+    ]
+  }
+}

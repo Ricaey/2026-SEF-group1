@@ -1,0 +1,70 @@
+@startuml sequence_trade_control
+skinparam backgroundColor transparent
+skinparam defaultFontName Microsoft YaHei
+
+title 交易控制与交易日管理流程
+
+actor "高级管理员" as admin
+participant "ADMIN 前端" as frontend
+participant "ADMIN 后端" as backend
+participant "TradeClient" as trade
+database "admin_db" as db
+participant "TRADE 服务" as trade_svc
+collections "CLIENT/INFO\n(WebSocket)" as ws
+
+== 暂停交易 ==
+
+admin -> frontend: 选择目标股票，填写暂停原因
+frontend -> backend: POST /api/v1/admin/stocks/{code}/pause\n{pause_reason}
+
+backend -> backend: 校验角色=SENIOR_ADMIN\n校验管理权限
+backend -> trade: POST /api/v1/trade/stocks/{code}/pause\n{pause_reason}
+
+trade -> trade_svc: 暂停指令
+trade_svc -> trade_svc: 股票状态 → PAUSED\n拒收新指令
+trade_svc -> ws: WebSocket 广播 stock.paused
+ws --> ws: CLIENT/INFO 更新本地状态
+trade_svc --> trade: 暂停成功
+trade --> backend: 200 OK
+
+backend -> db: INSERT operation_log\n(type=TRADE_CONTROL, target=stock_code,\ndetail=pause_reason)
+backend --> frontend: 200 {stock_code, status: PAUSED}
+frontend --> admin: 显示暂停成功，状态变更为 PAUSED
+
+== 重启交易 ==
+
+admin -> frontend: 选择已暂停的股票，提交重启
+frontend -> backend: POST /api/v1/admin/stocks/{code}/resume\n{resume_reason}
+
+backend -> backend: 校验权限
+backend -> trade: POST /api/v1/trade/stocks/{code}/resume
+trade -> trade_svc: 重启指令
+trade_svc -> trade_svc: 股票状态 → OPEN\n重新接受指令
+trade_svc -> ws: WebSocket 广播 stock.resumed
+trade_svc --> trade: 重启成功
+trade --> backend: 200 OK
+
+backend -> db: INSERT operation_log
+backend --> frontend: 200 {stock_code, status: OPEN}
+frontend --> admin: 显示重启成功
+
+== 交易日管理 ==
+
+admin -> frontend: 交易日开始/结束操作
+frontend -> backend: POST /api/v1/admin/trading-days/open\n或 /close {trade_date, reason}
+
+backend -> trade: POST /api/v1/trade/trading-days/open\n或 /close
+trade -> trade_svc: 交易日启停指令
+
+alt 交易日开始
+    trade_svc -> trade_svc: 启动撮合引擎\n股票状态 → OPEN
+else 交易日结束
+    trade_svc -> trade_svc: 拒收新指令\nQUEUED/PARTIALLY_FILLED → EXPIRED\n向 ACCOUNT 释放冻结资源\n归档当日行情
+end
+
+trade_svc --> trade: 操作成功
+trade --> backend: 200 OK
+backend -> db: INSERT operation_log (type=TRADING_DAY)
+backend --> frontend: 200 {trade_date, status}
+frontend --> admin: 显示交易日状态更新
+@enduml

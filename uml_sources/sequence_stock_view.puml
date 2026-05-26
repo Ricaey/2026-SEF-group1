@@ -1,0 +1,43 @@
+@startuml sequence_stock_view
+skinparam backgroundColor transparent
+skinparam defaultFontName Microsoft YaHei
+
+title 股票查看流程
+
+actor "管理员" as admin
+participant "ADMIN 前端" as frontend
+participant "ADMIN 后端" as backend
+participant "TradeClient" as trade
+database "admin_db" as db
+participant "TRADE 服务" as trade_svc
+
+admin -> frontend: 进入股票查看界面
+frontend -> backend: GET /api/v1/admin/stocks?keyword=
+
+backend -> backend: 解析 JWT 获取 admin_id, role
+
+alt role = SENIOR_ADMIN
+    backend -> backend: 授权范围 = 全部股票
+else role = NORMAL_ADMIN
+    backend -> db: SELECT authorized_stocks\nFROM permission_config\nWHERE admin_id = ?
+    db --> backend: authorized_stocks (JSON数组)
+end
+
+backend -> trade: GET /api/v1/trade/market?stock_codes=<授权列表>
+trade -> trade_svc: httpx 异步请求
+trade_svc --> trade: MarketQuote[] (最新价/成交量等)
+trade --> backend: 行情数据
+
+backend -> backend: 聚合股票信息与行情数据
+
+backend --> frontend: 200 {items: [{stock_code, stock_name,\nstock_type, latest_price, volume, ...}]}
+frontend --> admin: 渲染股票列表
+
+admin -> frontend: 点击某只股票查看买卖盘
+frontend -> backend: GET /api/v1/admin/stocks/{code}/quote
+backend -> trade: GET /api/v1/trade/order-books/{code}
+trade_svc --> trade: OrderBook (buy_levels, sell_levels)
+trade --> backend: 订单簿数据
+backend --> frontend: 200 {buy_levels, sell_levels}
+frontend --> admin: 展开买卖盘详情\n(买盘降序/卖盘升序)
+@enduml

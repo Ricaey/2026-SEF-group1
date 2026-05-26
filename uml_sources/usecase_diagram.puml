@@ -1,0 +1,34 @@
+@startuml
+left to right direction
+skinparam packageStyle rectangle
+
+actor "普通管理员" as Normal
+actor "高级管理员" as Senior
+actor "系统管理员" as SysAdmin
+actor "审计管理员" as Auditor
+
+Senior --|> Normal
+
+rectangle 交易系统管理 {
+  usecase "登录管理" as UC1
+  usecase "查看股票实时信息" as UC2
+  usecase "修改密码" as UC5
+  usecase "设置涨跌停限制" as UC3
+  usecase "暂停/重启交易" as UC4
+  usecase "权限管理" as UC6
+  usecase "审计日志查看" as UC7
+}
+
+Normal --> UC1
+Normal --> UC2
+Normal --> UC5
+Senior --> UC3
+Senior --> UC4
+SysAdmin --> UC1
+SysAdmin --> UC5
+SysAdmin --> UC6
+Auditor --> UC1
+Auditor --> UC5
+Auditor --> UC7
+
+@enduml

@@ -1,0 +1,47 @@
+@startuml sequence_limit_set
+skinparam backgroundColor transparent
+skinparam defaultFontName Microsoft YaHei
+
+title 涨跌停设置流程
+
+actor "高级管理员" as admin
+participant "ADMIN 前端" as frontend
+participant "ADMIN 后端" as backend
+participant "TradeClient" as trade
+database "admin_db" as db
+participant "TRADE 服务" as trade_svc
+
+admin -> frontend: 选择目标股票，输入涨跌幅比例\n(如 0.10)，选择生效日期(默认次日)
+frontend -> backend: PUT /api/v1/admin/stocks/{code}/limits\n{limit_up_ratio, limit_down_ratio, effective_date}
+
+backend -> backend: 解析 JWT
+
+alt role != SENIOR_ADMIN
+    backend --> frontend: 403 "仅高级管理员可设置涨跌停"
+else
+    backend -> db: SELECT authorized_stocks\nFROM permission_config\nWHERE admin_id = ?
+    db --> backend: authorized_stocks
+
+    alt 股票不在授权范围
+        backend --> frontend: 403 "无该股票管理权限"
+    else effective_date < today + 1
+        backend --> frontend: 422 "生效日期必须为次日或之后"
+    else 比例超出合法范围 (普通股>10% / ST>5%)
+        backend --> frontend: 422 "涨跌停比例超出合法范围"
+    else
+        backend -> trade: PUT /api/v1/trade/stocks/{code}/limits\n{limit_up_ratio, limit_down_ratio, effective_date}
+        trade -> trade_svc: 设置涨跌停比例
+
+        trade_svc -> trade_svc: 读取 previous_close_price & stock_type
+        trade_svc -> trade_svc: 计算:\nlimit_up = prev_close * (1+up_ratio)\nlimit_down = prev_close * (1-down_ratio)
+        trade_svc -> trade_svc: 保存价格限制
+        trade_svc --> trade: {stock_code, limit_up_price, limit_down_price, ...}
+        trade --> backend: TRADE 返回计算结果
+
+        backend -> db: INSERT operation_log\n(type=LIMIT_SET, detail=比例+计算结果)
+        backend --> frontend: 200 {stock_code, limit_up_ratio, limit_down_ratio,\nlimit_up_price, limit_down_price, effective_date}
+        frontend -> frontend: 展示"新限制将于次日生效"提示
+        frontend --> admin: 显示配置确认（含TRADE计算价格）
+    end
+end
+@enduml

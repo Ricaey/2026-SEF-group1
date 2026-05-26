@@ -311,8 +311,8 @@
 + *Process（处理）*：登录认证与角色识别、授权范围读取、行情数据聚合（调用TRADE接口）、涨跌停比例设置与转发（调用TRADE计算）、交易控制与交易日管理指令转发与状态广播、密码强度校验与更新、角色与授权范围配置、操作与登录日志审计。
 + *Output（输出）*：认证结果与 JWT 令牌、股票列表与实时行情、涨跌停配置确认（含 TRADE 计算的价格限制）、交易控制与交易日状态、密码修改结果、权限调整记录、审计日志列表。
 
-// （占用位，后续插入顶层IPO图）
-// #image("ipo_top.png", width: 95%)
+  // （占用位，后续插入顶层IPO图）
+  #image("ipo_top.png", width: 95%)
 
 == 系统结构
 
@@ -322,9 +322,21 @@
   columns: (0.08fr, 0.2fr, 0.42fr, 0.3fr),
   [*编号*], [*模块名称*], [*功能简述*], [*主要外部调用*],
   [M1], [登录管理模块], [管理员身份验证、会话创建与管理、登录失败锁定与自动解锁。], [无（纯内部模块）],
-  [M2], [股票查看模块], [按授权范围展示股票列表、实时行情与交易明细，支持搜索筛选与排序。], [TRADE: 行情查询、订单簿查询],
-  [M3], [涨跌停设置模块], [管理股票涨跌幅比例的单只与批量设置，调用 TRADE 完成价格计算，次日生效。], [TRADE: 涨跌停比例设置],
-  [M4], [交易控制模块], [执行股票的暂停/重启撮合操作与交易日开始/结束，调用 TRADE 执行并触发广播。], [TRADE: 暂停/重启、交易日管理],
+  [M2],
+  [股票查看模块],
+  [按授权范围展示股票列表、实时行情与交易明细，支持搜索筛选与排序。],
+  [TRADE: 行情查询、订单簿查询],
+
+  [M3],
+  [涨跌停设置模块],
+  [管理股票涨跌幅比例的单只与批量设置，调用 TRADE 完成价格计算，次日生效。],
+  [TRADE: 涨跌停比例设置],
+
+  [M4],
+  [交易控制模块],
+  [执行股票的暂停/重启撮合操作与交易日开始/结束，调用 TRADE 执行并触发广播。],
+  [TRADE: 暂停/重启、交易日管理],
+
   [M5], [密码管理模块], [管理员密码修改、强度校验与修改成功后强制重新登录。], [无（纯内部模块）],
   [M6], [权限管理模块], [管理各管理员的角色分配、授权股票范围与账号状态配置。], [无（纯内部模块）],
   [M7], [审计模块], [提供全局操作日志与登录日志的查看、筛选与导出，满足合规留痕。], [无（纯内部模块）],
@@ -338,8 +350,8 @@
 + M6（权限管理）仅系统管理员可访问；
 + M7（审计模块）仅审计管理员可访问。
 
-// （占用位，后续插入系统结构图）
-// #image("module_structure.png", width: 90%)
+  // （占用位，后续插入系统结构图）
+  #image("module_structure.png", width: 90%)
 
 == 技术介绍
 
@@ -376,7 +388,7 @@
 )
 
 // （占用位，后续插入部署图）
-// #image("deployment.png", width: 90%)
+#image("deployment.png", width: 90%)
 
 == 类图
 
@@ -402,8 +414,8 @@
 
 + *TradeClient*：封装对 TRADE HTTP API 的调用（行情、订单簿、涨跌停、暂停/重启、交易日管理），第一版以 REST 轮询代替 WebSocket 连接。
 
-// （占用位，后续插入类图）
-// #image("class_diagram.png", width: 90%)
+  // （占用位，后续插入类图）
+  #image("class_diagram.png", width: 90%)
 
 == 接口设计
 
@@ -412,17 +424,17 @@
 内部接口采用 Service 层方法调用方式，各模块间通过明确的接口交互：
 
 #table(
-  columns: (0.2fr, 0.2fr, 0.6fr),
+  columns: 3,
   [*调用方*], [*被调用方*], [*接口描述*],
-  [StockService], [PermissionService], [get_authorized_stocks(admin_id) -> 获取管理员授权股票范围],
-  [LimitService], [PermissionService], [check_stock_permission(admin_id, stock_code) -> 校验管理员对该股票的管理权限],
-  [TradeControlService], [PermissionService], [check_stock_permission(admin_id, stock_code) -> 同上],
-  [AuthService], [Admin (Model)], [authenticate(username, password) -> 验证身份并返回管理员信息],
-  [AuthService], [AuditService], [log_operation(...) -> 记录操作日志],
-  [LimitService], [TradeClient], [set_stock_limits(stock_code, ...) -> 向 TRADE 设置涨跌停比例],
-  [TradeControlService], [TradeClient], [pause_stock(...) / resume_stock(...) -> 向 TRADE 发送控制指令],
-  [TradeControlService], [TradeClient], [open_trading_day(...) / close_trading_day(...) -> 交易日管理],
-  [StockService], [TradeClient], [get_stock_quote(stock_code) -> 从 TRADE 获取实时行情],
+  [StockService], [PermissionService], [get_authorized_stocks(admin_id) → 获取管理员授权股票范围],
+  [LimitService], [PermissionService], [check_stock_permission(admin_id, stock_code) → 校验管理员对该股票的管理权限],
+  [TradeControlService], [PermissionService], [check_stock_permission(admin_id, stock_code) → 同上],
+  [AuthService], [Admin (Model)], [authenticate(username, password) → 验证身份并返回管理员信息],
+  [AuthService], [AuditService], [log_operation(...) → 记录操作日志],
+  [LimitService], [TradeClient], [set_stock_limits(stock_code, ...) → 向 TRADE 设置涨跌停比例],
+  [TradeControlService], [TradeClient], [pause_stock / resume_stock → 向 TRADE 发送控制指令],
+  [TradeControlService], [TradeClient], [open_trading_day / close_trading_day → 交易日管理],
+  [StockService], [TradeClient], [get_stock_quote(stock_code) → 从 TRADE 获取实时行情],
 )
 
 === 外部接口（ADMIN 对外提供的 API）
@@ -479,7 +491,7 @@ ADMIN 调用 TRADE 的接口（基础前缀 `/api/v1/trade`）：
 === 管理员登录认证流程
 
 // （占用位，后续插入顺序图）
-// #image("sequence_login.png", width: 85%)
+#image("sequence_login.png", width: 85%)
 
 交互序列：
 
@@ -494,7 +506,7 @@ ADMIN 调用 TRADE 的接口（基础前缀 `/api/v1/trade`）：
 === 股票查看流程
 
 // （占用位，后续插入顺序图）
-// #image("sequence_stock_view.png", width: 85%)
+#image("sequence_stock_view.png", width: 85%)
 
 交互序列：
 
@@ -509,7 +521,7 @@ ADMIN 调用 TRADE 的接口（基础前缀 `/api/v1/trade`）：
 === 涨跌停设置流程
 
 // （占用位，后续插入顺序图）
-// #image("sequence_limit_set.png", width: 85%)
+#image("sequence_limit_set.png", width: 85%)
 
 交互序列：
 
@@ -526,7 +538,7 @@ ADMIN 调用 TRADE 的接口（基础前缀 `/api/v1/trade`）：
 === 交易暂停与重启流程
 
 // （占用位，后续插入顺序图）
-// #image("sequence_trade_control.png", width: 85%)
+#image("sequence_trade_control.png", width: 85%)
 
 交互序列（暂停）：
 
@@ -552,7 +564,7 @@ ADMIN 调用 TRADE 的接口（基础前缀 `/api/v1/trade`）：
 === 权限管理流程
 
 // （占用位，后续插入顺序图）
-// #image("sequence_permission.png", width: 85%)
+#image("sequence_permission.png", width: 85%)
 
 交互序列：
 
@@ -732,8 +744,8 @@ ADMIN 调用 TRADE 的接口（基础前缀 `/api/v1/trade`）：
 + 会话超时（JWT 过期）后前端自动清除令牌并跳转至登录界面；
 + 密码修改成功后（`token_version` 自增使所有旧令牌失效）强制跳转至登录界面。
 
-// （占用位，后续插入页面流转图）
-// #image("page_flow.png", width: 90%)
+  // （占用位，后续插入页面流转图）
+  #image("page_flow.png", width: 90%)
 
 #pagebreak()
 
@@ -764,7 +776,7 @@ ADMIN 子系统独立维护以下四个实体（仅存储本子系统所需数�
 // #image("er_admin.png", width: 55%)
 // #image("er_operation_log.png", width: 55%)
 // #image("er_permission.png", width: 55%)
-// #image("er_global.png", width: 90%)
+#image("er_global.png", width: 90%)
 
 == 逻辑结构设计
 
@@ -794,7 +806,13 @@ ADMIN 子系统独立维护以下四个实体（仅存储本子系统所需数�
   [*序号*], [*字段名*], [*类型*], [*长度*], [*主键*], [*说明*],
   [1], [log_id], [INT], [8], [是], [日志唯一标识，自增主键],
   [2], [admin_id], [INT], [8], [], [操作管理员ID，外键 REFERENCES admin_info(admin_id)],
-  [3], [operation_type], [VARCHAR], [20], [], [操作类型：LOGIN / QUERY / LIMIT_SET / TRADE_CONTROL / TRADING_DAY / PASSWORD / PERMISSION / ADMIN_STATUS],
+  [3],
+  [operation_type],
+  [VARCHAR],
+  [20],
+  [],
+  [操作类型：LOGIN / QUERY / LIMIT_SET / TRADE_CONTROL / TRADING_DAY / PASSWORD / PERMISSION / ADMIN_STATUS],
+
   [4], [target_stock], [VARCHAR], [6], [], [操作目标股票代码，非股票操作时为空],
   [5], [detail], [VARCHAR], [512], [], [操作详细描述（含变更前后值、原因等）],
   [6], [operation_result], [TINYINT], [1], [], [操作结果：0=失败，1=成功],
@@ -838,17 +856,17 @@ ADMIN 子系统独立维护以下四个实体（仅存储本子系统所需数�
 === 索引设计
 
 #table(
-  columns: (0.15fr, 0.25fr, 0.15fr, 0.45fr),
+  columns: 4,
   [*表名*], [*索引字段*], [*索引类型*], [*说明*],
-  [admin_info], [username], [UNIQUE INDEX], [用户名唯一，防止重复创建],
+  [admin_info], [username], [UNIQUE], [用户名唯一，防止重复创建],
   [admin_info], [role_type], [INDEX], [按角色查询管理员列表],
   [admin_info], [status], [INDEX], [快速筛选锁定/禁用账号],
   [operation_log], [admin_id], [INDEX], [按操作管理员查询日志],
   [operation_log], [operation_type], [INDEX], [按操作类型筛选],
-  [operation_log], [operation_time], [INDEX], [按时间范围筛选，支持审计查询],
+  [operation_log], [operation_time], [INDEX], [按时间范围筛选审计查询],
   [login_log], [admin_id], [INDEX], [按管理员查询登录记录],
   [login_log], [login_time], [INDEX], [按时间范围筛选],
-  [permission_config], [admin_id], [UNIQUE INDEX], [每个管理员唯一一份权限配置],
+  [permission_config], [admin_id], [UNIQUE], [每管理员唯一一份权限配置],
 )
 
 === 备份策略
@@ -932,22 +950,18 @@ ADMIN 子系统独立维护以下四个实体（仅存储本子系统所需数�
 
 == 出错信息
 
-系统通过统一的错误响应格式返回错误信息：
+系统通过统一的错误响应格式返回错误信息（`false` 时携带 `code` 与 `message`）。各错误码含义如下：
 
-#table(
-  columns: (0.12fr, 0.2fr, 0.28fr, 0.4fr),
-  [*HTTP状态码*], [*错误码*], [*错误类型*], [*说明与处理方式*],
-  [400], [COMMON_BAD_REQUEST], [请求参数错误], [请求体字段缺失或格式不正确，前端表单校验应拦截大部分此类错误。],
-  [401], [COMMON_UNAUTHORIZED], [未认证], [JWT 令牌缺失、无效或已过期，前端跳转至登录页。],
-  [403], [COMMON_FORBIDDEN], [无权限], [当前角色无权执行该操作（如普通管理员尝试设置涨跌停）。],
-  [404], [COMMON_NOT_FOUND], [资源不存在], [请求的股票代码、管理员ID等不存在。],
-  [409], [COMMON_CONFLICT], [状态冲突], [如对已暂停的股票再次暂停、对未暂停的股票重启。],
-  [422], [ADMIN_VALIDATION_ERROR], [数据校验失败], [密码强度不足、涨跌停比例超出合法范围、生效日期早于当日。],
-  [429], [ADMIN_RATE_LIMITED], [请求过于频繁], [登录失败次数过多被临时锁定，或 API 调用超过限流阈值。],
-  [500], [COMMON_INTERNAL_ERROR], [服务器内部错误], [未预期的运行时异常，后端记录完整 traceback，返回通用错误提示。],
-  [502], [ADMIN_UPSTREAM_ERROR], [上游服务错误], [调用 TRADE 接口失败（超时/5xx），返回"外部服务暂不可用"。],
-  [503], [COMMON_SERVICE_UNAVAILABLE], [服务不可用], [系统维护中或数据库连接失败。],
-)
++ *400 COMMON_BAD_REQUEST* — 请求参数错误：请求体字段缺失或格式不正确，前端表单校验应拦截大部分此类错误。
++ *401 COMMON_UNAUTHORIZED* — 未认证：JWT 令牌缺失、无效或已过期，前端跳转至登录页。
++ *403 COMMON_FORBIDDEN* — 无权限：当前角色无权执行该操作（如普通管理员尝试设置涨跌停）。
++ *404 COMMON_NOT_FOUND* — 资源不存在：请求的股票代码、管理员ID等不存在。
++ *409 COMMON_CONFLICT* — 状态冲突：如对已暂停的股票再次暂停、对未暂停的股票重启。
++ *422 ADMIN_VALIDATION_ERROR* — 数据校验失败：密码强度不足、涨跌停比例超出合法范围、生效日期早于当日。
++ *429 ADMIN_RATE_LIMITED* — 请求过于频繁：登录失败次数过多被临时锁定，或 API 调用超过限流阈值。
++ *500 COMMON_INTERNAL_ERROR* — 服务器内部错误：未预期的运行时异常，后端记录完整 traceback，返回通用错误提示。
++ *502 ADMIN_UPSTREAM_ERROR* — 上游服务错误：调用 TRADE 接口失败（超时/5xx），返回"外部服务暂不可用"。
++ *503 COMMON_SERVICE_UNAVAILABLE* — 服务不可用：系统维护中或数据库连接失败。
 
 == 补救措施
 

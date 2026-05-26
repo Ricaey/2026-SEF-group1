@@ -1,0 +1,42 @@
+@startuml ipo_top
+skinparam backgroundColor transparent
+skinparam defaultFontName Microsoft YaHei
+skinparam rectangleBorderThickness 2
+
+title 系统顶层 IPO 图
+
+rectangle "**输入 (Input)**" as input #LightYellow {
+  rectangle "管理员登录凭证\n(用户名+密码)" as i1
+  rectangle "股票查询条件\n(代码/名称/板块)" as i2
+  rectangle "涨跌停比例\n(涨幅+跌幅+生效日期)" as i3
+  rectangle "交易控制指令\n(暂停/重启+原因)" as i4
+  rectangle "交易日控制指令" as i5
+  rectangle "密码修改请求" as i6
+  rectangle "权限调整请求" as i7
+  rectangle "审计查询条件" as i8
+}
+
+rectangle "**处理 (Process)**" as process #LightBlue {
+  rectangle "登录认证与\n角色识别" as p1
+  rectangle "授权范围读取" as p2
+  rectangle "行情数据聚合\n(调用TRADE)" as p3
+  rectangle "涨跌停比例设置\n(调用TRADE计算)" as p4
+  rectangle "交易控制与\n交易日管理转发" as p5
+  rectangle "密码强度\n校验与更新" as p6
+  rectangle "角色与授权\n范围配置" as p7
+  rectangle "操作与登录\n日志审计" as p8
+}
+
+rectangle "**输出 (Output)**" as output #LightGreen {
+  rectangle "JWT令牌与\n角色授权信息" as o1
+  rectangle "股票列表与\n实时行情" as o2
+  rectangle "涨跌停配置\n(含TRADE计算价格)" as o3
+  rectangle "交易控制\n与交易日状态" as o4
+  rectangle "密码修改结果" as o5
+  rectangle "权限调整记录" as o6
+  rectangle "审计日志列表" as o7
+}
+
+input -down-> process
+process -down-> output
+@enduml

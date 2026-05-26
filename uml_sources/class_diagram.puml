@@ -1,0 +1,139 @@
+@startuml class_diagram
+skinparam backgroundColor transparent
+skinparam defaultFontName Microsoft YaHei
+skinparam classBorderThickness 2
+
+title 系统核心类图
+
+' === 实体类 (Model) ===
+
+class Admin {
+  + admin_id: INT (PK)
+  + username: VARCHAR(20) (UNIQUE)
+  + password_hash: VARCHAR(256)
+  + role_type: TINYINT
+  + status: VARCHAR(10)
+  + failed_attempts: INT
+  + lock_until: DATETIME
+  + token_version: INT
+  + created_at: DATETIME
+  + last_login: DATETIME
+  --
+  + is_active(): bool
+  + is_locked(): bool
+  + should_unlock(): bool
+}
+
+class OperationLog {
+  + log_id: INT (PK)
+  + admin_id: INT (FK)
+  + operation_type: VARCHAR(20)
+  + target_stock: VARCHAR(6)
+  + detail: VARCHAR(512)
+  + operation_result: TINYINT
+  + operation_time: DATETIME
+  + ip_address: VARCHAR(45)
+}
+
+class PermissionConfig {
+  + config_id: INT (PK)
+  + admin_id: INT (FK, UNIQUE)
+  + authorized_stocks: JSON
+  + updated_by: INT (FK)
+  + updated_at: DATETIME
+}
+
+class LoginLog {
+  + login_log_id: INT (PK)
+  + admin_id: INT (FK)
+  + login_time: DATETIME
+  + logout_time: DATETIME
+  + login_result: TINYINT
+  + fail_reason: VARCHAR(128)
+  + ip_address: VARCHAR(45)
+  + session_id: VARCHAR(64)
+}
+
+' === 服务类 (Service) ===
+
+class AuthService {
+  + authenticate(username, password): Admin
+  + generate_jwt(admin): str
+  + verify_jwt(token): dict
+  + change_password(admin_id, old, new): bool
+  + check_account_status(admin): str
+}
+
+class StockService {
+  + get_authorized_stocks(admin_id): list
+  + get_stock_quotes(stock_codes): list
+  + get_order_book(stock_code): dict
+  + search_stocks(keyword, admin_id): list
+}
+
+class LimitService {
+  + set_stock_limits(admin_id, stock_code, ratios): dict
+  + validate_ratios(ratios, stock_type): bool
+  + get_current_limits(stock_code): dict
+}
+
+class TradeControlService {
+  + pause_stock(admin_id, stock_code, reason): bool
+  + resume_stock(admin_id, stock_code, reason): bool
+  + open_trading_day(admin_id, date): bool
+  + close_trading_day(admin_id, date, reason): bool
+}
+
+class PermissionService {
+  + get_all_admins(): list
+  + update_role(admin_id, new_role): bool
+  + update_auth_stocks(admin_id, stocks): bool
+  + update_status(admin_id, status): bool
+  + check_stock_permission(admin_id, stock_code): bool
+  + get_authorized_stocks(admin_id): list
+}
+
+class AuditService {
+  + query_operation_logs(filters): list
+  + query_login_logs(filters): list
+  + log_operation(admin_id, type, detail): void
+  + export_logs(filters, format): file
+}
+
+' === 外部接口类 (Client) ===
+
+class TradeClient {
+  + get_market_quote(stock_code): MarketQuote
+  + get_market_batch(stock_codes): list
+  + get_order_book(stock_code): dict
+  + set_stock_limits(stock_code, ratios): dict
+  + pause_stock(stock_code, reason): bool
+  + resume_stock(stock_code, reason): bool
+  + open_trading_day(date, operator): bool
+  + close_trading_day(date, trigger, reason): bool
+  - _request(method, path, data): Response
+}
+
+' === 关系 ===
+
+Admin "1" -- "0..*" OperationLog : generates >
+Admin "1" -- "0..*" LoginLog : has >
+Admin "1" -- "1" PermissionConfig : owns >
+
+AuthService --> Admin : reads/writes
+AuthService --> AuditService : logs to
+StockService --> PermissionService : uses
+StockService --> TradeClient : uses
+LimitService --> PermissionService : uses
+LimitService --> TradeClient : uses
+TradeControlService --> PermissionService : uses
+TradeControlService --> TradeClient : uses
+TradeControlService --> AuditService : logs to
+PermissionService --> Admin : updates
+PermissionService --> PermissionConfig : updates
+PermissionService --> AuditService : logs to
+AuditService --> OperationLog : reads
+AuditService --> LoginLog : reads
+
+TradeClient --> TradeClient : "httpx async"
+@enduml

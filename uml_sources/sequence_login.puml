@@ -1,0 +1,47 @@
+@startuml sequence_login
+skinparam backgroundColor transparent
+skinparam defaultFontName Microsoft YaHei
+
+title 管理员登录认证流程
+
+actor "管理员" as admin
+participant "ADMIN 前端\n(Vue 3)" as frontend
+participant "ADMIN 后端\n(FastAPI)" as backend
+database "MySQL\n(admin_db)" as db
+
+admin -> frontend: 输入用户名与密码
+frontend -> backend: POST /api/v1/admin/auth/login\n{username, password}
+backend -> db: SELECT * FROM admin_info\nWHERE username = ?
+db --> backend: admin 记录
+
+alt 账号不存在
+    backend --> frontend: 401 "账号不存在"
+    frontend --> admin: 显示错误提示
+else status = disabled
+    backend -> db: INSERT login_log (fail_reason="账户禁用")
+    backend --> frontend: 403 "账户已被禁用"
+else status = locked 且 lock_until > now
+    backend --> frontend: 423 "账户已锁定，剩余X分Y秒"
+else status = locked 且 lock_until <= now
+    backend -> db: UPDATE status='active', failed_attempts=0
+    backend -> backend: bcrypt 校验密码
+else status = active
+    backend -> backend: bcrypt 校验密码
+
+    alt 密码错误
+        backend -> db: UPDATE failed_attempts += 1
+        alt failed_attempts >= 5
+            backend -> db: UPDATE status='locked', lock_until=NOW()+5min
+        end
+        backend -> db: INSERT login_log (fail_reason="密码错误")
+        backend --> frontend: 401 "密码错误，剩余X次机会"
+    else 密码正确
+        backend -> backend: 生成 JWT\n(payload: admin_id, role, token_version, exp)
+        backend -> db: UPDATE failed_attempts=0, last_login=NOW()
+        backend -> db: INSERT login_log (result=1)
+        backend --> frontend: 200 {token, role, authorized_stocks}
+        frontend -> frontend: 存储 JWT 令牌\n根据 role 渲染功能菜单
+        frontend --> admin: 跳转至主界面
+    end
+end
+@enduml

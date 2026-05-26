@@ -1,0 +1,66 @@
+@startuml sequence_permission
+skinparam backgroundColor transparent
+skinparam defaultFontName Microsoft YaHei
+
+title 权限管理与审计日志查询流程
+
+actor "系统管理员" as sys_admin
+actor "审计管理员" as audit_admin
+participant "ADMIN 前端" as frontend
+participant "ADMIN 后端" as backend
+database "admin_db" as db
+
+== 权限管理（系统管理员） ==
+
+sys_admin -> frontend: 进入权限管理界面
+frontend -> backend: GET /api/v1/admin/admins
+
+backend -> backend: 解析 JWT，校验 role=SYSTEM_ADMIN
+
+backend -> db: SELECT a.*, p.authorized_stocks\nFROM admin_info a\nLEFT JOIN permission_config p\nON a.admin_id = p.admin_id
+db --> backend: 管理员列表（含角色/状态/授权范围）
+backend --> frontend: 200 {admins: [...]}
+frontend --> sys_admin: 渲染管理员列表表格
+
+sys_admin -> frontend: 调整某管理员角色/授权范围/状态
+frontend -> backend: PUT /api/v1/admin/admins/{id}/permissions\n{role, authorized_stocks, status, reason}
+
+backend -> backend: 校验 role=SYSTEM_ADMIN
+
+alt 调整角色
+    backend -> db: UPDATE admin_info\nSET role_type = ?, token_version += 1\nWHERE admin_id = ?
+else 调整授权范围
+    backend -> db: INSERT/UPDATE permission_config\nSET authorized_stocks = ?\nWHERE admin_id = ?
+else 调整状态 (解锁/禁用/启用)
+    backend -> db: UPDATE admin_info\nSET status = ?, token_version += 1\nWHERE admin_id = ?
+end
+
+backend -> db: INSERT operation_log\n(type=PERMISSION, detail=变更前后值)
+backend --> frontend: 200 OK
+frontend --> sys_admin: 显示权限调整成功
+
+== 审计日志查询（审计管理员） ==
+
+audit_admin -> frontend: 进入审计界面，设置筛选条件
+frontend -> backend: GET /api/v1/admin/audit/operation-logs\n?admin_id=&operation_type=&start_time=&end_time=
+
+backend -> backend: 校验 role=AUDIT_ADMIN
+
+backend -> db: SELECT * FROM operation_log\nWHERE filters...
+db --> backend: 操作日志列表
+backend --> frontend: 200 {items: [...], page, total}
+frontend --> audit_admin: 显示操作日志列表
+
+audit_admin -> frontend: 切换至登录日志 Tab
+frontend -> backend: GET /api/v1/admin/audit/login-logs\n?admin_id=&start_time=&end_time=
+
+backend -> db: SELECT * FROM login_log\nWHERE filters...
+db --> backend: 登录日志列表
+backend --> frontend: 200 {items: [...], page, total}
+frontend --> audit_admin: 显示登录日志列表
+
+audit_admin -> frontend: 点击导出
+frontend -> backend: GET ...&format=csv
+backend --> frontend: CSV 文件下载
+frontend --> audit_admin: 浏览器下载日志文件
+@enduml

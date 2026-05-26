@@ -1,0 +1,85 @@
+@startuml page_flow
+skinparam backgroundColor transparent
+skinparam defaultFontName Microsoft YaHei
+skinparam activityBorderThickness 2
+
+title 页面流转关系图 (基于 RBAC)
+
+start
+
+:管理员访问系统;
+
+:登录界面;
+
+:输入用户名与密码;
+
+if (认证通过?) then (是)
+  :解析 JWT 获取 role;
+
+  switch (role)
+  case (NORMAL_ADMIN)
+    :跳转至 股票查看主界面;
+    note right
+      可见菜单:
+      - M2 股票查看
+      - M5 密码修改
+    end note
+
+  case (SENIOR_ADMIN)
+    :跳转至 股票查看主界面;
+    note right
+      可见菜单:
+      - M2 股票查看
+      - M3 涨跌停设置
+      - M4 交易控制(含交易日管理)
+      - M5 密码修改
+    end note
+
+  case (SYSTEM_ADMIN)
+    :跳转至 权限管理界面;
+    note right
+      可见菜单:
+      - M6 权限管理
+      - M5 密码修改
+    end note
+
+  case (AUDIT_ADMIN)
+    :跳转至 审计日志界面;
+    note right
+      可见菜单:
+      - M7 审计日志
+      - M5 密码修改
+    end note
+
+  endswitch
+
+  :正常使用系统;
+
+  if (JWT 过期?) then (是)
+    :自动清除令牌;
+    :跳转至登录界面;
+  else (否)
+    if (修改密码?) then (是)
+      :修改密码;
+      :token_version 自增使旧 JWT 失效;
+      :强制跳转至登录界面;
+    else (否)
+      if (主动退出?) then (是)
+        :清除令牌;
+        :跳转至登录界面;
+      else (否)
+        :继续使用;
+      endif
+    endif
+  endif
+
+else (否)
+  :显示错误提示;
+  if (连续失败 >= 5?) then (是)
+    :账号锁定 5 分钟;
+  endif
+  :返回登录界面;
+endif
+
+stop
+@enduml

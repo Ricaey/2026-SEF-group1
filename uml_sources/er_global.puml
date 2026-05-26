@@ -1,0 +1,58 @@
+@startuml er_global
+skinparam backgroundColor transparent
+skinparam defaultFontName Microsoft YaHei
+
+title 全局 E-R 图
+
+entity "管理员 (Admin)" as admin {
+  * admin_id : INT <<PK>>
+  --
+  * username : VARCHAR(20) <<UK>>
+  * password_hash : VARCHAR(256)
+  * role_type : TINYINT
+  * status : VARCHAR(10)
+  * failed_attempts : INT
+  * lock_until : DATETIME
+  * token_version : INT
+  * created_at : DATETIME
+  * last_login : DATETIME
+}
+
+entity "操作日志 (OperationLog)" as oplog {
+  * log_id : INT <<PK>>
+  --
+  * admin_id : INT <<FK>>
+  * operation_type : VARCHAR(20)
+  * target_stock : VARCHAR(6)
+  * detail : VARCHAR(512)
+  * operation_result : TINYINT
+  * operation_time : DATETIME
+  * ip_address : VARCHAR(45)
+}
+
+entity "权限配置 (PermissionConfig)" as perm {
+  * config_id : INT <<PK>>
+  --
+  * admin_id : INT <<FK,UK>>
+  * authorized_stocks : JSON
+  * updated_by : INT <<FK>>
+  * updated_at : DATETIME
+}
+
+entity "登录日志 (LoginLog)" as loginlog {
+  * login_log_id : INT <<PK>>
+  --
+  * admin_id : INT <<FK>>
+  * login_time : DATETIME
+  * logout_time : DATETIME
+  * login_result : TINYINT
+  * fail_reason : VARCHAR(128)
+  * ip_address : VARCHAR(45)
+  * session_id : VARCHAR(64)
+}
+
+admin ||--o{ oplog : "产生"
+admin ||--o{ loginlog : "产生"
+admin ||--|| perm : "拥有"
+admin ||--o{ perm : "管理 (updated_by)"
+@enduml

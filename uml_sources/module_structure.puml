@@ -1,0 +1,45 @@
+@startuml module_structure
+skinparam backgroundColor transparent
+skinparam defaultFontName Microsoft YaHei
+skinparam packageBorderThickness 2
+skinparam componentStyle rectangle
+
+title 系统模块结构图
+
+package "交易系统管理业务 (ADMIN)" #White {
+
+  component "M1\n登录管理模块" as m1 #FFE0B2
+  component "M2\n股票查看模块" as m2 #FFE0B2
+  component "M3\n涨跌停设置模块" as m3 #FFE0B2
+  component "M4\n交易控制模块\n(含交易日管理)" as m4 #FFCC80
+  component "M5\n密码管理模块" as m5 #FFE0B2
+  component "M6\n权限管理模块" as m6 #C8E6C9
+  component "M7\n审计模块" as m7 #BBDEFB
+
+  m1 -down-> m6 : 校验角色
+  m2 -down-> m6 : 获取授权范围
+  m3 -down-> m6 : 校验管理权限
+  m4 -down-> m6 : 校验管理权限
+  m5 -down-> m6 : 校验身份
+  m7 -down-> m6 : 校验审计角色
+}
+
+cloud "中央交易系统\n(TRADE)" as trade #EEEEEE {
+}
+
+m2 -right-> trade : 行情查询\n订单簿查询
+m3 -right-> trade : 涨跌停比例设置
+m4 -right-> trade : 暂停/重启\n交易日管理
+
+database "admin_db\n(MySQL)" as db #BBDEFB {
+}
+
+m1 -down-> db : 读/写 管理员信息\n写 登录日志
+m2 -down-> db : 读 权限配置
+m3 -down-> db : 写 操作日志
+m4 -down-> db : 写 操作日志
+m5 -down-> db : 写 管理员信息(密码)
+m6 -down-> db : 写 权限/角色/状态
+m7 -down-> db : 读 操作日志/登录日志
+
+@enduml
