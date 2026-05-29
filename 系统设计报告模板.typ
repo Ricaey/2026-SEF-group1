@@ -291,7 +291,7 @@
 + *数据访问层（Repository）*：封装数据库 CRUD 操作，通过 SQLAlchemy ORM 访问 MySQL。
 + *外部接口层（Client）*：封装对 TRADE 外部系统的 HTTP 调用。
 
-前后端通过 RESTful API（JSON over HTTP）通信，管理员认证采用 JWT Bearer Token。实时行情数据通过 TRADE WebSocket 获取或 REST 轮询（每 5 秒）。
+前后端通过 RESTful API（JSON over HTTP）通信，管理员认证采用 JWT Bearer Token。实时行情数据第一版采用每 5 秒 REST 轮询 TRADE `/market` 接口获取。
 
 === 核心流程概述
 
@@ -383,7 +383,7 @@
   [*组件*], [*部署位置*], [*端口*], [*说明*],
   [ADMIN 前端（Vue 3）], [Nginx 静态资源 + 浏览器], [80/443], [Nginx 作为反向代理与静态资源服务器],
   [ADMIN 后端（FastAPI）], [应用服务器], [8000], [处理业务逻辑，调用外部 API],
-  [MySQL（admin_db）], [数据库服务器], [3306], [存储管理员信息、操作日志、权限配置],
+  [MySQL（admin_db）], [数据库服务器], [3306], [存储管理员/日志/权限数据。第一版与 TRADE 等组共用 MySQL 实例，通过库名 admin_db 隔离],
   [TRADE 服务], [交易服务器], [8001], [外部依赖，通过 HTTP 交互（第一版 REST 轮询行情）],
 )
 
@@ -439,7 +439,7 @@
 
 === 外部接口（ADMIN 对外提供的 API）
 
-ADMIN 子系统对外暴露以下 RESTful API（基础前缀 `/api/v1/admin`）：
+ADMIN 子系统对外暴露以下 RESTful API（业务接口前缀 `/api/v1/admin`）：
 
 #table(
   columns: (0.1fr, 0.32fr, 0.58fr),
@@ -456,8 +456,20 @@ ADMIN 子系统对外暴露以下 RESTful API（基础前缀 `/api/v1/admin`）�
   [POST], [/trading-days/close], [发起交易日结束（调用 TRADE）],
   [GET], [/admins], [查看所有管理员账号与权限（仅系统管理员）],
   [PUT], [/admins/{admin_id}/permissions], [调整管理员角色、授权范围或状态（仅系统管理员）],
-  [GET], [/audit/operation-logs?filters...], [查询操作日志（仅审计管理员）],
-  [GET], [/audit/login-logs?filters...], [查询登录日志（仅审计管理员）],
+  [GET], [/audit/operation-logs?filters...], [查询操作日志（仅审计管理员），支持分页与筛选],
+  [GET], [/audit/login-logs?filters...], [查询登录日志（仅审计管理员），支持分页与筛选],
+  [GET], [/audit/logs/export?filters...&format=csv], [导出审计日志为 CSV 文件（仅审计管理员）],
+  [DELETE], [/audit/logs?before=&type=], [删除指定日期之前的操作日志或登录日志（仅审计管理员），需二次确认],
+)
+
+以下端点不带 `/api/v1/admin` 前缀，直接挂在根路径：
+
+#table(
+  columns: (0.1fr, 0.25fr, 0.65fr),
+  [*方法*], [*端点*], [*描述*],
+  [GET], [/health], [健康检查。检查 MySQL 数据库连通性（`SELECT 1`），检查 TRADE 服务 `/health` 可达性，汇总返回自身及各依赖状态。响应：`{"service":"admin-service","status":"UP","dependencies":{"mysql":"UP","trade":"UP"},"time":"2026-05-25T10:30:00+08:00"}`。任一依赖不可用时 `status="DEGRADED"`，自身不可用时返回 503。],
+  [GET], [/docs], [FastAPI 自动生成的 Swagger UI 交互式 API 文档],
+  [GET], [/openapi.json], [OpenAPI 3.0 JSON Schema，供其他组自动生成客户端代码],
 )
 
 === 外部接口（ADMIN 调用的 TRADE API）
@@ -806,13 +818,7 @@ ADMIN 子系统独立维护以下四个实体（仅存储本子系统所需数�
   [*序号*], [*字段名*], [*类型*], [*长度*], [*主键*], [*说明*],
   [1], [log_id], [INT], [8], [是], [日志唯一标识，自增主键],
   [2], [admin_id], [INT], [8], [], [操作管理员ID，外键 REFERENCES admin_info(admin_id)],
-  [3],
-  [operation_type],
-  [VARCHAR],
-  [20],
-  [],
-  [操作类型：LOGIN / QUERY / LIMIT_SET / TRADE_CONTROL / TRADING_DAY / PASSWORD / PERMISSION / ADMIN_STATUS],
-
+  [3], [operation_type], [VARCHAR], [20], [], [操作类型：LOGIN / QUERY / LIMIT_SET / TRADE_CONTROL / TRADING_DAY / PASSWORD / PERMISSION / ADMIN_STATUS],
   [4], [target_stock], [VARCHAR], [6], [], [操作目标股票代码，非股票操作时为空],
   [5], [detail], [VARCHAR], [512], [], [操作详细描述（含变更前后值、原因等）],
   [6], [operation_result], [TINYINT], [1], [], [操作结果：0=失败，1=成功],
@@ -846,6 +852,8 @@ ADMIN 子系统独立维护以下四个实体（仅存储本子系统所需数�
   [7], [ip_address], [VARCHAR], [45], [], [登录来源IP地址],
   [8], [session_id], [VARCHAR], [64], [], [会话标识（JWT jti），登出后置为NULL],
 )
+
+所有外键（`operation_log.admin_id`、`login_log.admin_id`、`permission_config.admin_id`、`permission_config.updated_by`）均设置为 `ON DELETE RESTRICT`，禁止物理删除管理员账号。业务上仅将管理员 `status` 设为 `disabled` 以实现停用，不执行 DELETE 操作。
 
 == 物理结构设计
 
@@ -918,12 +926,12 @@ ADMIN 子系统独立维护以下四个实体（仅存储本子系统所需数�
 
 + 管理员登录后根据角色进入对应功能界面；
 + ADMIN 后端处理管理员请求：内部模块（登录、密码、权限、审计）直接操作数据库；外部依赖（行情、涨跌停、交易控制、交易日管理）通过 httpx 异步调用 TRADE API；
-+ 实时行情数据通过 TRADE WebSocket 或 5 秒 REST 轮询获取并缓存；
++ 实时行情数据通过每 5 秒 REST 轮询 TRADE `/market` 获取并缓存；
 + 所有关键操作写入 `operation_log` 表。
 
 === 系统维护
 
-+ 定期检查 `operation_log` 与 `login_log` 表大小，超过 30 天的日志归档至历史表或导出文件；
++ 定期检查 `operation_log` 与 `login_log` 表大小，必要时导出旧日志文件并清理记录，防止表过度膨胀；
 + 定期执行数据库备份；
 + 监控系统性能（CPU、内存、磁盘、请求响应时间、TRADE 调用延迟）；
 + 按需更新 Python 依赖与系统安全补丁。
@@ -989,6 +997,6 @@ ADMIN 子系统独立维护以下四个实体（仅存储本子系统所需数�
 
 + *版本控制*：所有代码通过 Git 管理，提交前通过代码审查；发布分支与开发分支分离。
 + *依赖管理*：使用 `requirements.txt` 或 `pyproject.toml` 锁定依赖版本，定期运行 `pip audit` 检查安全漏洞。
-+ *日志维护*：`operation_log` 与 `login_log` 表按月归档，保留 30 天热数据，历史数据压缩归档至文件存储，保留 6 个月。
++ *日志维护*：`operation_log` 与 `login_log` 表不设自动归档，通过审计模块提供的导出（CSV）与删除功能手动清理。导出后由运维人员决定保留策略。
 + *性能监控*：通过 FastAPI 内置 metrics + 中间件记录请求耗时，监控 TRADE API 调用延迟与成功率。
 + *接口文档*：通过 FastAPI 自动生成 `/docs`（Swagger UI）和 `/openapi.json`，与跨组接口约定保持同步。
