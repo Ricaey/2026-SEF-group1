@@ -132,6 +132,12 @@
 // ============================================================
 // 以下为正文模板
 // 请按项目实际情况填写（搜索 "TODO" 定位需替换内容）
+//
+// 图片目录约定：
+//   images/uml/         — PlantUML 生成的架构图、顺序图、类图、ER图等
+//   images/requirements/ — 需求阶段图片（用例图、状态图、DFD图）
+//   images/ui/           — UI 原型图（登录、股票查看、涨跌停、交易控制、权限、审计、密码）
+//   uml_sources/         — PlantUML 源文件（.puml），用于重新生成 UML 图
 // ============================================================
 
 // ---- 目录 ----
@@ -554,7 +560,7 @@
 
 #v(1cm)
 #align(center)[
-  #image("usecase_diagram.png", width: 80%)
+  #image("images/requirements/usecase_diagram.png", width: 80%)
 ]
 
 #pagebreak()
@@ -569,7 +575,7 @@
 
 #v(1cm)
 #align(center)[
-  #image("dfd_top_level.png", width: 95%)
+  #image("images/requirements/dfd_top_level.png", width: 95%)
 ]
 
 == 0 层图
@@ -578,7 +584,7 @@
 
 #v(1cm)
 #align(center)[
-  #image("dfd_level0.png", width: 95%)
+  #image("images/requirements/dfd_level0.png", width: 95%)
 ]
 
 == 1 层图
@@ -587,7 +593,7 @@
 
 #v(1cm)
 #align(center)[
-  #image("dfd_level1.png", width: 95%)
+  #image("images/requirements/dfd_level1.png", width: 95%)
 ]
 
 #pagebreak()
@@ -1009,7 +1015,7 @@
 
 #v(1cm)
 #align(center)[
-  #image("state_diagram.png", width: 90%)
+  #image("images/requirements/state_diagram.png", width: 90%)
 ]
 
 // ==================== 第8章 CRC 卡 ====================

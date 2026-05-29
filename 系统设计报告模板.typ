@@ -132,6 +132,12 @@
 // ============================================================
 // 以下为正文模板
 // 请按项目实际情况填写（搜索 "TODO" 定位需替换内容）
+//
+// 图片目录约定：
+//   images/uml/         — PlantUML 生成的架构图、顺序图、类图、ER图等
+//   images/requirements/ — 需求阶段图片（用例图、状态图、DFD图）
+//   images/ui/           — UI 原型图（登录、股票查看、涨跌停、交易控制、权限、审计、密码）
+//   uml_sources/         — PlantUML 源文件（.puml），用于重新生成 UML 图
 // ============================================================
 
 // ---- 目录 ----
@@ -312,7 +318,7 @@
 + *Output（输出）*：认证结果与 JWT 令牌、股票列表与实时行情、涨跌停配置确认（含 TRADE 计算的价格限制）、交易控制与交易日状态、密码修改结果、权限调整记录、审计日志列表。
 
   // （占用位，后续插入顶层IPO图）
-  #image("ipo_top.png", width: 95%)
+  #image("images/uml/ipo_top.png", width: 95%)
 
 == 系统结构
 
@@ -351,7 +357,7 @@
 + M7（审计模块）仅审计管理员可访问。
 
   // （占用位，后续插入系统结构图）
-  #image("module_structure.png", width: 90%)
+  #image("images/uml/module_structure.png", width: 90%)
 
 == 技术介绍
 
@@ -388,7 +394,7 @@
 )
 
 // （占用位，后续插入部署图）
-#image("deployment.png", width: 90%)
+#image("images/uml/deployment.png", width: 90%)
 
 == 类图
 
@@ -415,7 +421,7 @@
 + *TradeClient*：封装对 TRADE HTTP API 的调用（行情、订单簿、涨跌停、暂停/重启、交易日管理），第一版以 REST 轮询代替 WebSocket 连接。
 
   // （占用位，后续插入类图）
-  #image("class_diagram.png", width: 90%)
+  #image("images/uml/class_diagram.png", width: 90%)
 
 == 接口设计
 
@@ -503,7 +509,7 @@ ADMIN 调用 TRADE 的接口（基础前缀 `/api/v1/trade`）：
 === 管理员登录认证流程
 
 // （占用位，后续插入顺序图）
-#image("sequence_login.png", width: 85%)
+#image("images/uml/sequence_login.png", width: 85%)
 
 交互序列：
 
@@ -518,7 +524,7 @@ ADMIN 调用 TRADE 的接口（基础前缀 `/api/v1/trade`）：
 === 股票查看流程
 
 // （占用位，后续插入顺序图）
-#image("sequence_stock_view.png", width: 85%)
+#image("images/uml/sequence_stock_view.png", width: 85%)
 
 交互序列：
 
@@ -533,7 +539,7 @@ ADMIN 调用 TRADE 的接口（基础前缀 `/api/v1/trade`）：
 === 涨跌停设置流程
 
 // （占用位，后续插入顺序图）
-#image("sequence_limit_set.png", width: 85%)
+#image("images/uml/sequence_limit_set.png", width: 85%)
 
 交互序列：
 
@@ -550,7 +556,7 @@ ADMIN 调用 TRADE 的接口（基础前缀 `/api/v1/trade`）：
 === 交易暂停与重启流程
 
 // （占用位，后续插入顺序图）
-#image("sequence_trade_control.png", width: 85%)
+#image("images/uml/sequence_trade_control.png", width: 85%)
 
 交互序列（暂停）：
 
@@ -576,7 +582,7 @@ ADMIN 调用 TRADE 的接口（基础前缀 `/api/v1/trade`）：
 === 权限管理流程
 
 // （占用位，后续插入顺序图）
-#image("sequence_permission.png", width: 85%)
+#image("images/uml/sequence_permission.png", width: 85%)
 
 交互序列：
 
@@ -677,7 +683,7 @@ ADMIN 调用 TRADE 的接口（基础前缀 `/api/v1/trade`）：
 + 登录失败时显示错误提示（用户名或密码错误 / 账户已锁定 X 分 Y 秒 / 账户已禁用）。
 
 // （占用位，后续插入登录界面原型）
-// #image("ui_login.png", width: 70%)
+// #image("images/ui/ui_login.png", width: 70%)
 
 === 股票查看主界面
 
@@ -687,7 +693,7 @@ ADMIN 调用 TRADE 的接口（基础前缀 `/api/v1/trade`）：
 + 点击某只股票：展开买卖盘详情（买盘降序、卖盘升序），每档显示价格、数量、时间。
 
 // （占用位，后续插入股票查看界面原型）
-// #image("ui_stock_view.png", width: 90%)
+// #image("images/ui/ui_stock_view.png", width: 90%)
 
 === 涨跌停设置界面
 
@@ -697,7 +703,7 @@ ADMIN 调用 TRADE 的接口（基础前缀 `/api/v1/trade`）：
 + 提交按钮与重置按钮。
 
 // （占用位，后续插入涨跌停设置界面原型）
-// #image("ui_limit_set.png", width: 85%)
+// #image("images/ui/ui_limit_set.png", width: 85%)
 
 === 交易控制界面
 
@@ -714,7 +720,7 @@ ADMIN 调用 TRADE 的接口（基础前缀 `/api/v1/trade`）：
 + 交易日结束按钮（仅在已开始时可用，点击前二次确认）。
 
 // （占用位，后续插入交易控制界面原型）
-// #image("ui_trade_control.png", width: 80%)
+// #image("images/ui/ui_trade_control.png", width: 80%)
 
 === 权限管理界面
 
@@ -723,7 +729,7 @@ ADMIN 调用 TRADE 的接口（基础前缀 `/api/v1/trade`）：
 + 系统管理员仅可管理非自身的其他管理员。
 
 // （占用位，后续插入权限管理界面原型）
-// #image("ui_permission.png", width: 85%)
+// #image("images/ui/ui_permission.png", width: 85%)
 
 === 审计日志界面
 
@@ -732,7 +738,7 @@ ADMIN 调用 TRADE 的接口（基础前缀 `/api/v1/trade`）：
 + 导出按钮（导出当前筛选结果为 CSV 文件）。
 
 // （占用位，后续插入审计日志界面原型）
-// #image("ui_audit.png", width: 85%)
+// #image("images/ui/ui_audit.png", width: 85%)
 
 === 密码修改界面
 
@@ -741,7 +747,7 @@ ADMIN 调用 TRADE 的接口（基础前缀 `/api/v1/trade`）：
 + 提交按钮与取消按钮。
 
 // （占用位，后续插入密码修改界面原型）
-// #image("ui_password.png", width: 60%)
+// #image("images/ui/ui_password.png", width: 60%)
 
 == 页面流转关系
 
@@ -757,7 +763,7 @@ ADMIN 调用 TRADE 的接口（基础前缀 `/api/v1/trade`）：
 + 密码修改成功后（`token_version` 自增使所有旧令牌失效）强制跳转至登录界面。
 
   // （占用位，后续插入页面流转图）
-  #image("page_flow.png", width: 90%)
+  #image("images/uml/page_flow.png", width: 90%)
 
 #pagebreak()
 
@@ -785,10 +791,10 @@ ADMIN 子系统独立维护以下四个实体（仅存储本子系统所需数�
 === E-R 图
 
 // （占用位，后续插入E-R图）
-// #image("er_admin.png", width: 55%)
-// #image("er_operation_log.png", width: 55%)
-// #image("er_permission.png", width: 55%)
-#image("er_global.png", width: 90%)
+// #image("images/uml/er_admin.png", width: 55%)
+// #image("images/uml/er_operation_log.png", width: 55%)
+// #image("images/uml/er_permission.png", width: 55%)
+#image("images/uml/er_global.png", width: 90%)
 
 == 逻辑结构设计
 
