@@ -683,7 +683,7 @@ ADMIN 调用 TRADE 的接口（基础前缀 `/api/v1/trade`）：
 + 登录失败时显示错误提示（用户名或密码错误 / 账户已锁定 X 分 Y 秒 / 账户已禁用）。
 
 // （占用位，后续插入登录界面原型）
-// #image("images/ui/ui_login.png", width: 70%)
+  #image("images/ui/ui_login.png", width: 70%)
 
 === 股票查看主界面
 
@@ -693,7 +693,7 @@ ADMIN 调用 TRADE 的接口（基础前缀 `/api/v1/trade`）：
 + 点击某只股票：展开买卖盘详情（买盘降序、卖盘升序），每档显示价格、数量、时间。
 
 // （占用位，后续插入股票查看界面原型）
-// #image("images/ui/ui_stock_view.png", width: 90%)
+  #image("images/ui/ui_stock_view.png", width: 90%)
 
 === 涨跌停设置界面
 
@@ -703,7 +703,7 @@ ADMIN 调用 TRADE 的接口（基础前缀 `/api/v1/trade`）：
 + 提交按钮与重置按钮。
 
 // （占用位，后续插入涨跌停设置界面原型）
-// #image("images/ui/ui_limit_set.png", width: 85%)
+  #image("images/ui/ui_limit_set.png", width: 85%)
 
 === 交易控制界面
 
@@ -720,7 +720,7 @@ ADMIN 调用 TRADE 的接口（基础前缀 `/api/v1/trade`）：
 + 交易日结束按钮（仅在已开始时可用，点击前二次确认）。
 
 // （占用位，后续插入交易控制界面原型）
-// #image("images/ui/ui_trade_control.png", width: 80%)
+  #image("images/ui/ui_trade_control.png", width: 80%)
 
 === 权限管理界面
 
@@ -729,7 +729,7 @@ ADMIN 调用 TRADE 的接口（基础前缀 `/api/v1/trade`）：
 + 系统管理员仅可管理非自身的其他管理员。
 
 // （占用位，后续插入权限管理界面原型）
-// #image("images/ui/ui_permission.png", width: 85%)
+  #image("images/ui/ui_permission.png", width: 85%)
 
 === 审计日志界面
 
@@ -738,7 +738,7 @@ ADMIN 调用 TRADE 的接口（基础前缀 `/api/v1/trade`）：
 + 导出按钮（导出当前筛选结果为 CSV 文件）。
 
 // （占用位，后续插入审计日志界面原型）
-// #image("images/ui/ui_audit.png", width: 85%)
+  #image("images/ui/ui_audit.png", width: 85%)
 
 === 密码修改界面
 
@@ -747,7 +747,7 @@ ADMIN 调用 TRADE 的接口（基础前缀 `/api/v1/trade`）：
 + 提交按钮与取消按钮。
 
 // （占用位，后续插入密码修改界面原型）
-// #image("images/ui/ui_password.png", width: 60%)
+  #image("images/ui/ui_password.png", width: 60%)
 
 == 页面流转关系
 
