@@ -1,0 +1,1668 @@
+// ============================================================
+// 测试报告 Typst 模板
+// 使用方法：
+//   1. 在下方"自定义变量"区域填写项目信息
+//   2. 按章节编辑正文内容（搜索 "TODO" 快速定位需填写处）
+//   3. 用 typst compile 编译为 PDF
+// ============================================================
+
+// ==================== 全局配置 ====================
+
+#set page(
+  paper: "a4",
+  margin: (top: 2.5cm, bottom: 2cm, left: 3cm, right: 2.5cm),
+  numbering: "1",
+)
+
+#set text(
+  font: ("Times New Roman", "SimSun"),
+  size: 12pt,
+  lang: "zh",
+)
+
+#set par(
+  justify: true,
+  leading: 0.65em,
+  first-line-indent: 2em,
+)
+
+#set heading(numbering: "1.1")
+#set list(marker: ([•], [–], [\*]))
+#set enum(numbering: "1)")
+
+// ==================== 自定义变量（请在此修改） ====================
+
+#let course-code = "SE2026"            // 课程编号
+#let system-name = "股票交易系统"      // 系统名称
+#let subsystem-name = "交易系统管理业务" // 子系统名称
+#let doc-title = "测试报告"            // 文档标题
+#let team-leader = "孙米阳"            // 组长姓名
+#let team-members = ("郝建文", "黄中维", "杨佳利", "陆思越") // 组员姓名列表
+#let doc-date = "2026年6月10"          // 日期
+#let doc-version = "V1.0"             // 版本号
+
+// ==================== 辅助函数 ====================
+
+// 键值对行
+#let dl-field(key, value) = grid(
+  columns: (3.5cm, 1fr),
+  column-gutter: 0.5em,
+  [*#key*], [#value],
+)
+
+// ==================== 封面页 ====================
+
+#let cover-page() = {
+  set page(
+    margin: (top: 3cm, bottom: 2.5cm, left: 3cm, right: 2.5cm),
+    header: none,
+    footer: none,
+    numbering: none,
+  )
+  set par(first-line-indent: 0em)
+
+  v(2cm)
+  align(center)[
+    #text(size: 14pt, fill: gray.lighten(20%))[
+      #course-code #system-name #subsystem-name
+    ]
+  ]
+
+  v(4cm)
+  align(center)[
+    #text(size: 28pt, weight: "bold")[【#system-name】]
+  ]
+
+  v(0.8cm)
+  align(center)[
+    #text(size: 18pt, weight: "bold")[——#subsystem-name]
+  ]
+
+  v(2cm)
+  align(center)[
+    #text(size: 22pt, weight: "bold")[#doc-title]
+  ]
+
+  v(5cm)
+  align(center)[#text(size: 14pt)[组长：#team-leader]]
+  v(0.5em)
+  align(center)[#text(size: 14pt)[组员：#team-members.join(" ")]]
+  v(0.5em)
+  align(center)[#text(size: 14pt)[日期：#doc-date]]
+  v(0.5em)
+  align(center)[#text(size: 14pt)[版本：#doc-version]]
+
+  pagebreak()
+}
+
+// ==================== 页眉页脚设置 ====================
+
+#let with-header-footer(body) = {
+  set page(
+    header: [
+      #grid(
+        columns: (auto, 1fr, auto),
+        [#align(left)[#text(size: 9pt)[#course-code #system-name #subsystem-name]]],
+        [#align(center)[]],
+        [#align(right)[#text(size: 9pt, style: "italic")[#subsystem-name]]],
+      )
+      #v(-4pt)
+      #line(length: 100%, stroke: 0.5pt + black)
+    ],
+    footer: [
+      #line(length: 100%, stroke: 0.5pt + black)
+      #v(4pt)
+      #align(center)[
+        #context [
+          #text(size: 9pt)[— #counter(page).display("1") —]
+        ]
+      ]
+    ],
+  )
+  body
+}
+
+// ==================== 模板入口 ====================
+
+#show: it => {
+  cover-page()
+  with-header-footer(it)
+}
+
+// ============================================================
+// 以下为正文模板
+// 请按项目实际情况填写（搜索 "TODO" 定位需替换内容）
+//
+// 图片目录约定：
+//   images/test/       — 测试截图（功能测试、边界值测试、压力测试、接口测试、安全测试）
+// ============================================================
+
+// ---- 目录 ----
+#outline(title: "目录", depth: 3, indent: 1.5em)
+#pagebreak()
+
+// ==================== 第1章 引言 ====================
+
+= 引言
+
+== 编写目的
+
+本测试报告为#system-name #subsystem-name 的测试报告，目的在于总结测试阶段出现的问题，检测系统是否达到预期功能目标，以验证系统能否按预期实现相关功能。报告总结了测试阶段中的详细步骤和测试结果，并对需求是否得到满足进行了评估。
+
+本报告预期的参考人员包括软件客户、项目经理、项目开发人员、软件质量分析人员、系统维护人员等。
+
+== 项目背景
+
+=== 软件系统名称
+
+#system-name——#subsystem-name
+
+=== 任务提出者
+
+软件工程基础课程教学组
+
+=== 开发者
+
+#team-members.join("、")
+
+=== 目标用户
+
+股票交易所内部管理员（普通管理员、高级管理员、系统管理员、审计管理员）
+
+=== 项目相关背景介绍
+
+本项目为软件工程基础课程实验项目，属于"股票交易系统"五组协作项目中的交易系统管理业务子系统。五组分工如下：
+
++ *交易系统管理（ADMIN - 本组）*：管理员登录、权限管理、股票查看、涨跌停设置、交易控制、交易日管理、审计日志。
++ *中央交易系统（TRADE）*：指令接收与校验、订单簿维护、撮合引擎、成交回报、行情数据生成与推送。
++ *账户业务子系统（ACCOUNT）*：资金账户与证券账户管理、认证、资金/证券冻结与结算。
++ *网上信息发布（INFO）*：普通/VIP用户体系、行情查询、K线展示。
++ *交易客户端（CLIENT）*：投资者侧交互界面，下单、撤单、查看持仓与成交。
+
+== 术语与缩写解释
+
+#table(
+  columns: (1fr, 1fr),
+  [*缩写、术语及符号*], [*解释*],
+  [SRS], [软件需求规格说明书（Software Requirements Specification）。],
+  [RBAC], [基于角色的访问控制（Role-Based Access Control），通过角色划分管理用户权限。],
+  [API], [应用程序编程接口（Application Programming Interface），定义系统内外部交互的接口规范。],
+  [TRADE], [中央交易系统（Central Trading System），负责指令接收、撮合、成交、行情推送。],
+  [ADMIN], [交易系统管理业务子系统，负责管理员登录、权限管理、交易控制等。],
+  [ACCOUNT], [账户业务子系统，管理资金账户、证券账户与认证。],
+  [INFO], [网上信息发布子系统，面向普通/VIP用户提供行情查询与K线展示。],
+  [CLIENT], [交易客户端，投资者侧的交互界面。],
+  [JWT], [JSON Web Token，用于无状态身份认证的令牌格式。],
+  [ORM], [对象关系映射（Object-Relational Mapping），通过 SQLAlchemy 访问 MySQL。],
+  [SQL注入], [一种代码注入攻击技术，攻击者通过在输入中插入恶意SQL语句来操纵数据库。],
+  [XSS], [跨站脚本攻击（Cross-Site Scripting），攻击者向Web页面注入恶意脚本。],
+  [CSV], [逗号分隔值（Comma-Separated Values），一种通用数据交换格式。],
+  [E2E], [端到端测试（End-to-End Testing），模拟真实用户操作流程的测试方法。],
+)
+
+== 系统概述
+
+=== 整体系统概述
+
+#system-name 是一个模拟的证券交易平台，由五个子系统协作构成：交易系统管理（ADMIN）、中央交易系统（TRADE）、账户业务（ACCOUNT）、网上信息发布（INFO）、交易客户端（CLIENT）。系统支持投资者开户、登录、下单、撤单、行情查看、成交查询等功能，同时为交易所管理员提供权限管理、涨跌停设置、交易控制等后台管理功能。
+
+=== #subsystem-name 概述
+
+#subsystem-name 面向股票交易所内部管理员，采用基于角色的访问控制（RBAC），按职责划分为四类角色：
+
++ *普通管理员（NORMAL_ADMIN，编码0）*：查看授权范围内的股票列表、实时行情与交易明细。
++ *高级管理员（SENIOR_ADMIN，编码1）*：除普通管理员权限外，还具备涨跌停比例设置、交易暂停/重启、交易日开始/结束的控制权限。
++ *系统管理员（SYSTEM_ADMIN，编码2）*：负责管理员账号的创建、角色分配、授权股票范围配置及账号状态管理。
++ *审计管理员（AUDIT_ADMIN，编码3）*：具有只读权限，查看全局操作日志与登录日志，支持筛选与导出。
+
+系统共划分为八个功能模块：认证管理、股票查看、涨跌停设置、交易控制、交易日管理、密码管理、权限管理、审计日志。
+
+=== 关键数据模型
+
+#table(
+  columns: (0.2fr, 0.3fr, 0.5fr),
+  [*模型*], [*表名*], [*说明*],
+  [Admin], [`admin_info`], [管理员账户信息，含角色、状态、锁定等字段],
+  [PermissionConfig], [`permission_config`], [管理员股票授权范围配置],
+  [LoginLog], [`login_log`], [登录/登出日志记录],
+  [OperationLog], [`operation_log`], [操作审计日志记录],
+)
+
+=== 架构概览
+
+// （占用位，后续插入架构图）
+// #image("images/test/architecture.png", width: 80%)
+
+ADMIN 子系统采用前后端分离的 B/S 架构。后端为 FastAPI + MySQL，前端为 Vue 3 + Element Plus。ADMIN 通过 httpx 异步 HTTP 客户端调用 TRADE 的外部 API。测试时需要同时关注后端 API、前端页面以及 ADMIN ↔ TRADE 的集成交互。
+
+== 测试对象——#subsystem-name 说明
+
+本测试针对#system-name #subsystem-name 进行，测试范围涵盖以下后端 API 模块和前端页面：
+
+*后端模块（8个）：*
+
++ *认证模块（Auth）*：管理员登录/登出、密码修改、获取当前用户信息。
++ *股票查看模块（Stocks）*：按授权范围展示股票列表、实时行情与委托簿查询。
++ *涨跌停设置模块（Limits）*：管理股票涨跌幅比例设置，调用 TRADE 完成价格计算。
++ *交易控制模块（Trade Control）*：执行股票的暂停/重启撮合操作。
++ *交易日管理模块（Trading Days）*：交易日开始/结束控制。
++ *权限管理模块（Permissions）*：管理员角色、授权范围与账号状态配置。
++ *审计日志模块（Audit）*：操作日志与登录日志的查看、筛选、导出与删除。
++ *健康检查模块（Health Check）*：服务健康状态及依赖检测。
+
+*前端页面（7个）：*
++ `/login` — 登录页
++ `/stocks` — 股票查看
++ `/limits` — 涨跌停设置
++ `/trade-control` — 交易控制
++ `/permissions` — 权限管理
++ `/audit` — 审计日志
++ `/password` — 密码修改
+
+== 测试策略
+
+=== 测试层次
+
+#table(
+  columns: (0.3fr, 0.7fr),
+  [*层次*], [*说明*],
+  [单元测试], [pytest 对业务逻辑层、工具函数进行测试],
+  [集成测试], [pytest + httpx 对 API 级别进行测试（核心）],
+  [E2E 测试], [Playwright / Cypress 进行冒烟级别的端到端测试],
+)
+
+=== 测试优先级
+
+#table(
+  columns: (0.1fr, 0.3fr, 0.6fr),
+  [*优先级*], [*模块*], [*理由*],
+  [P0], [Auth（登录/鉴权）], [所有接口的前置依赖],
+  [P0], [角色权限控制], [安全核心],
+  [P1], [涨跌停设置], [交易核心管理功能],
+  [P1], [交易控制（暂停/重启）], [交易核心管理功能],
+  [P1], [交易日管理], [交易核心管理功能],
+  [P2], [股票查看], [基础展示功能],
+  [P2], [权限管理], [管理员运维功能],
+  [P2], [审计日志], [审计与追溯功能],
+  [P3], [健康检查], [运维监控辅助],
+)
+
+=== 测试类型
+
++ *功能测试（90%+）*：手动 + 自动化，覆盖所有 API 端点；
++ *边界测试*：输入边界、权限边界、状态边界；
++ *异常测试*：网络异常、数据库异常、上游服务异常；
++ *安全测试*：未授权访问、越权操作、Token 伪造/过期、SQL 注入、XSS；
++ *性能测试*：并发登录、日志大数据量查询、CSV 导出。
+
+== 测试环境
+
+=== 测试拓扑
+
+// （占用位，后续插入测试拓扑图）
+// #image("images/test/test_topology.png", width: 80%)
+
+测试拓扑由以下组件构成：测试客户端（curl / pytest / 浏览器）→ ADMIN 服务（localhost:8000）→ MySQL 测试实例 + TRADE Mock 服务。
+
+=== 依赖与配置
+
+#table(
+  columns: (0.2fr, 0.2fr, 0.6fr),
+  [*组件*], [*版本要求*], [*说明*],
+  [Python], [≥ 3.10], [后端运行环境],
+  [Node.js], [≥ 18], [前端构建环境],
+  [MySQL], [≥ 8.0], [数据持久化],
+  [FastAPI], [≥ 0.110.0], [Web 框架],
+  [Vue 3], [最新稳定版], [前端框架],
+  [Element Plus], [最新稳定版], [UI 组件库],
+)
+
+=== 测试数据
+
+使用 `seed.py` 预置的四类管理员账号：
+
+#table(
+  columns: (0.25fr, 0.25fr, 0.5fr),
+  [*用户名*], [*密码*], [*角色*],
+  [`normal_admin`], [`Admin@123`], [NORMAL_ADMIN（普通管理员）],
+  [`senior_admin`], [`Admin@123`], [SENIOR_ADMIN（高级管理员）],
+  [`sys_admin`], [`Admin@123`], [SYSTEM_ADMIN（系统管理员）],
+  [`audit_admin`], [`Admin@123`], [AUDIT_ADMIN（审计管理员）],
+)
+
+== 测试内容
+
+#table(
+  columns: (0.15fr, 0.25fr, 0.6fr),
+  [*测试名称*], [*目的*], [*内容*],
+  [模块功能测试], [检测各个模块的功能是否全部实现], [根据需求规格说明书和系统设计报告的要求针对各个模块进行功能测试，尽可能保证测试项覆盖所有功能和各种功能条件组合。],
+  [边界值测试], [检测系统能否正常处理边界值], [在一些存在边界值问题的数据里分别输入边界值，观察系统反应，检测系统的应对能力。],
+  [压力测试], [测试系统的承受能力], [对子系统进行超过规定性能指标的测试，包括系统能够在压力过程中避免明显的性能下降，以及在压力后的及时恢复。],
+  [模块接口测试], [测试与其他模块的接口是否完好，能否最后实现集成测试], [运行本子系统，观察数据库里的数据变化，检查子系统间的交互；Mock TRADE 以隔离外部依赖。],
+  [安全性测试], [检测系统的安全防护能力], [测试 JWT 认证机制、URL 防篡改、SQL 注入防护、角色权限隔离、XSS 防护等安全措施的完备性。],
+)
+
+== 测试设备
+
+=== 硬件设备
+
++ 个人计算机（CPU 4 核 2.6GHz 以上，内存 8.0GB 以上，硬盘可用空间不小于 50GB）
++ 局域网环境（千兆以太网，与 TRADE 子系统内网互通）
+
+=== 软件设备
+
++ *操作系统*：Windows 10/11
++ *浏览器*：
+  - Microsoft Edge（最新 2 个版本）
+  - Google Chrome（最新 2 个版本）
+  - Mozilla Firefox（最新版）
++ *测试辅助工具*：
+  - Postman（API 接口测试）
+  - Apache JMeter / Locust（压力测试）
+  - 浏览器开发者工具（F12）
+  - pytest + httpx（自动化测试框架）
+
+== 测试进度安排
+
+#table(
+  columns: (0.12fr, 0.35fr, 0.18fr, 0.35fr),
+  [*阶段*], [*内容*], [*起止时间*], [*产出*],
+  [第一阶段（预备阶段）], [测试人员阅读本子系统的设计文档与需求文档，熟悉各个功能模块所实现的具体功能，了解本子系统各个输入数据的边界情况。同时，寻找用于测试相关的工具。], [TODO], [测试计划、测试工具清单],
+  [第二阶段（准备阶段）], [测试人员根据各个功能模块的功能，编写测试用例，准备好测试所使用的输入数据。], [TODO], [测试用例文档、测试数据集],
+  [第三阶段（测试阶段）], [测试人员针对已经开发出来的子系统，用测试用例对系统进行模块功能测试、边界值测试、接口测试与安全性测试，找出本子系统中存在的缺陷或错误。], [TODO], [测试执行记录、缺陷报告],
+  [第四阶段（后期阶段）], [本子系统编码人员根据测试阶段的结果调整程序代码，修复存在的缺陷或错误。测试人员对修复后的系统进行回归测试。], [TODO], [修复记录、回归测试报告],
+)
+
+#pagebreak()
+
+// ==================== 第2章 模块功能测试 ====================
+
+= 模块功能测试
+
+== 模块说明
+
+本系统共划分为八个功能模块：认证模块、股票查看模块、涨跌停设置模块、交易控制模块、交易日管理模块、密码管理模块、权限管理模块、审计日志模块，另含健康检查端点。
+
+以下对各模块的功能进行逐一测试。每个模块测试包含 API 端点说明、测试用例、测试结果、测试结果分析与测试结果截图四部分。
+
+// ---- 2.1 认证模块 ----
+
+== 认证模块（Auth）功能测试
+
+=== API 端点
+
+#table(
+  columns: (0.1fr, 0.35fr, 0.2fr, 0.35fr),
+  [*方法*], [*路径*], [*鉴权*], [*说明*],
+  [POST], [`/api/v1/admin/auth/login`], [无], [管理员登录],
+  [POST], [`/api/v1/admin/auth/logout`], [Bearer Token], [管理员登出],
+  [POST], [`/api/v1/admin/auth/password`], [Bearer Token], [修改密码],
+  [GET], [`/api/v1/admin/auth/me`], [Bearer Token], [获取当前管理员信息],
+)
+
+=== 测试用例
+
+测试登录、登出、密码修改及令牌管理等场景。
+
+#table(
+  columns: (0.07fr, 0.14fr, 0.15fr, 0.07fr, 0.18fr, 0.12fr, 0.27fr),
+  [*编号*], [*测试功能*], [*测试标题*], [*级别*], [*预置条件*], [*输入*], [*操作步骤与预期输出*],
+  [AUTH-001], [管理员登录], [正常登录], [高], [数据库有 seed 账号], [normal_admin / Admin@123], [操作步骤：1) POST /auth/login；2) 传入正确的用户名与密码。\ 预期输出：200，返回 JWT 令牌，role=NORMAL_ADMIN。],
+  [AUTH-002], [管理员登录], [用户名不存在], [高], [干净数据库], [不存在的用户名], [操作步骤：用不存在的用户名尝试登录。\ 预期输出：401，"用户名或密码错误"。],
+  [AUTH-003], [管理员登录], [密码错误], [高], [已有账号], [正确用户名 + 错误密码], [操作步骤：输入正确用户名与错误密码。\ 预期输出：401，剩余尝试次数递减。],
+  [AUTH-004], [账户锁定], [连续5次失败触发锁定], [高], [已有账号], [连续5次错误密码], [操作步骤：连续5次输入错误密码。\ 预期输出：第5次失败后账号锁定，第6次返回 403，"账户已锁定，剩余X分X秒"。],
+  [AUTH-005], [账户锁定], [锁定到期自动解锁], [高], [账号处于锁定状态且 lock_until 已过期], [正确密码], [操作步骤：等待锁定时间（5分钟）后，输入正确密码登录。\ 预期输出：自动解锁，登录成功。],
+  [AUTH-006], [账户状态], [禁用账户无法登录], [高], [账号 status=disabled], [禁用账号的凭据], [操作步骤：使用被禁用的账号登录。\ 预期输出：403，"账户已被禁用"。],
+  [AUTH-007], [管理员登出], [正常登出], [中], [已登录持有有效 token], [POST /auth/logout], [操作步骤：携带有效 token 调用登出接口。\ 预期输出：200，"已退出登录"，logout_time 写入 login_log。],
+  [AUTH-008], [令牌校验], [无 Token 访问受保护接口], [高], [无 Token], [GET /auth/me 不带 Authorization], [操作步骤：不携带 JWT 令牌调用需认证的接口。\ 预期输出：401，"未登录或令牌无效"。],
+  [AUTH-009], [令牌校验], [伪造 Token 被拒绝], [高], [使用篡改过的 JWT], [自签名或修改 payload 的 JWT], [操作步骤：手动修改 JWT payload 中的 role 字段后再调用接口。\ 预期输出：401，"令牌无效或已过期"。],
+  [AUTH-010], [令牌校验], [Token 版本失效], [高], [密码修改后使用旧 token], [修改密码前的旧 JWT], [操作步骤：1) 登录；2) 修改密码（使 token_version+1）；3) 用旧令牌调用接口。\ 预期输出：401，旧令牌失效。],
+  [AUTH-011], [密码修改], [正确修改密码], [高], [已登录], [原密码正确 + 新密码符合强度 + 两次一致], [操作步骤：1) POST /auth/password；2) 传入正确原密码和符合要求的新密码。\ 预期输出：200，"密码修改成功"。],
+  [AUTH-012], [密码修改], [原密码错误], [高], [已登录], [错误的原密码], [操作步骤：传入错误的原密码。\ 预期输出：401，"原密码错误"。],
+  [AUTH-013], [密码修改], [两次新密码不一致], [高], [已登录], [新密码 ≠ 确认密码], [操作步骤：两次输入不一致的新密码。\ 预期输出：422，"两次输入的新密码不一致"。],
+  [AUTH-014], [密码修改], [新密码强度不足(仅含数字)], [高], [已登录], [新密码=12345678], [操作步骤：输入纯数字的8位新密码。\ 预期输出：422，"密码需包含大小写字母、数字、特殊字符中至少三类"。],
+  [AUTH-015], [密码修改], [新密码长度不足8位], [中], [已登录], [新密码=Abc123!]， [操作步骤：输入7位的新密码。\ 预期输出：422，"密码长度不能少于8位"。],
+  [AUTH-016], [用户信息], [获取当前用户信息], [中], [已登录], [GET /auth/me], [操作步骤：携带有效 token 调用。\ 预期输出：200，返回 admin_id, username, role, status。],
+  [AUTH-017], [日志记录], [登录日志完整记录], [中], [任意登录操作], [多次登录/失败], [操作步骤：执行多次成功和失败的登录操作。\ 预期输出：login_log 表新增记录，字段完整。],
+)
+
+=== 测试结果
+
+#table(
+  columns: (0.07fr, 0.41fr, 0.1fr, 0.42fr),
+  [*编号*], [*实际输出*], [*是否通过*], [*备注*],
+  [AUTH-001], [TODO], [TODO], [TODO],
+  [AUTH-002], [TODO], [TODO], [TODO],
+  [AUTH-003], [TODO], [TODO], [TODO],
+  [AUTH-004], [TODO], [TODO], [TODO],
+  [AUTH-005], [TODO], [TODO], [TODO],
+  [AUTH-006], [TODO], [TODO], [TODO],
+  [AUTH-007], [TODO], [TODO], [TODO],
+  [AUTH-008], [TODO], [TODO], [TODO],
+  [AUTH-009], [TODO], [TODO], [TODO],
+  [AUTH-010], [TODO], [TODO], [TODO],
+  [AUTH-011], [TODO], [TODO], [TODO],
+  [AUTH-012], [TODO], [TODO], [TODO],
+  [AUTH-013], [TODO], [TODO], [TODO],
+  [AUTH-014], [TODO], [TODO], [TODO],
+  [AUTH-015], [TODO], [TODO], [TODO],
+  [AUTH-016], [TODO], [TODO], [TODO],
+  [AUTH-017], [TODO], [TODO], [TODO],
+)
+
+=== 测试结果分析
+
+TODO：对认证模块的测试结果进行分析，说明哪些功能正常、哪些存在缺陷。重点关注：
++ bcrypt 密码校验是否正常；
++ JWT 令牌生成与校验逻辑是否正确；
++ 登录失败计数与锁定/解锁机制是否按预期工作；
++ 密码强度校验（长度 ≥ 8、至少含三类字符）是否生效；
++ token_version 自增机制是否正确使旧令牌失效。
+
+=== 测试结果截图
+
+// TODO：插入认证模块测试截图
+// #image("images/test/auth_login_success.png", width: 70%)
+// #image("images/test/auth_login_fail.png", width: 70%)
+// #image("images/test/auth_locked.png", width: 70%)
+
+#pagebreak()
+
+// ---- 2.2 股票查看模块 ----
+
+== 股票查看模块（Stocks）功能测试
+
+=== API 端点
+
+#table(
+  columns: (0.1fr, 0.35fr, 0.2fr, 0.35fr),
+  [*方法*], [*路径*], [*鉴权*], [*说明*],
+  [GET], [`/api/v1/admin/stocks?keyword=`], [Bearer Token], [股票列表（支持关键字搜索）],
+  [GET], [`/api/v1/admin/stocks/{code}/quote`], [Bearer Token], [单只股票实时行情],
+  [GET], [`/api/v1/admin/stocks/{code}/order-book`], [Bearer Token], [委托簿（买卖盘口）],
+)
+
+=== 测试用例
+
+#table(
+  columns: (0.07fr, 0.14fr, 0.15fr, 0.07fr, 0.18fr, 0.12fr, 0.27fr),
+  [*编号*], [*测试功能*], [*测试标题*], [*级别*], [*预置条件*], [*输入*], [*操作步骤与预期输出*],
+  [STOCK-001], [股票列表], [普通管理员查看授权股票], [高], [NORMAL_ADMIN 登录，授权["600000","000001","600036"]] , [GET /stocks], [操作步骤：普通管理员进入股票查看页面。\ 预期输出：仅返回授权范围内的股票，不显示未授权股票。],
+  [STOCK-002], [股票列表], [高级管理员查看全部股票], [高], [SENIOR_ADMIN 登录], [GET /stocks], [操作步骤：高级管理员进入股票查看页面。\ 预期输出：返回全部股票，不受授权范围限制。],
+  [STOCK-003], [股票搜索], [关键字搜索（代码）], [高], [已有股票数据], [keyword=600], [操作步骤：输入关键字"600"搜索。\ 预期输出：返回代码或名称匹配"600"的授权股票。],
+  [STOCK-004], [股票搜索], [空关键字搜索], [中], [已有股票数据], [keyword=空], [操作步骤：不输入关键字直接搜索。\ 预期输出：返回所有授权股票。],
+  [STOCK-005], [实时行情], [查看授权股票行情], [高], [管理员对该股票有授权], [GET /stocks/600000/quote], [操作步骤：点击某只授权股票，查看行情详情。\ 预期输出：返回行情对象（latest_price, open_price, high, low, volume 等）。],
+  [STOCK-006], [实时行情], [查看未授权股票行情], [高], [NORMAL_ADMIN 无该股票权限], [GET /stocks/999999/quote], [操作步骤：普通管理员尝试查看未授权股票行情。\ 预期输出：返回错误"管理员无该股票权限"。],
+  [STOCK-007], [实时行情], [查看不存在的股票], [中], [任意管理员], [GET /stocks/XXXXXX/quote], [操作步骤：查询不存在的股票代码。\ 预期输出：TRADE返回 404 → ADMIN 返回"股票不存在或行情不可用"。],
+  [STOCK-008], [委托簿], [查看股票买卖盘口], [中], [任意管理员], [GET /stocks/600000/order-book], [操作步骤：点击某只股票查看委托簿。\ 预期输出：返回 buy_levels[] 和 sell_levels[]，每档含价格、数量、时间。],
+  [STOCK-009], [异常容错], [TRADE 服务不可达], [高], [停止 TRADE 服务], [调用任意股票接口], [操作步骤：停掉 TRADE 后通过 ADMIN 查询股票行情。\ 预期输出：返回错误码 ADMIN_UPSTREAM_ERROR（502）。],
+  [STOCK-010], [异常容错], [TRADE 服务超时], [中], [模拟 TRADE 超时（>5s）], [调用任意股票接口], [操作步骤：设置 TRADE 响应延迟 >5s 后查询。\ 预期输出：返回"TRADE服务超时"或 502。],
+)
+
+=== 测试结果
+
+#table(
+  columns: (0.07fr, 0.41fr, 0.1fr, 0.42fr),
+  [*编号*], [*实际输出*], [*是否通过*], [*备注*],
+  [STOCK-001], [TODO], [TODO], [TODO],
+  [STOCK-002], [TODO], [TODO], [TODO],
+  [STOCK-003], [TODO], [TODO], [TODO],
+  [STOCK-004], [TODO], [TODO], [TODO],
+  [STOCK-005], [TODO], [TODO], [TODO],
+  [STOCK-006], [TODO], [TODO], [TODO],
+  [STOCK-007], [TODO], [TODO], [TODO],
+  [STOCK-008], [TODO], [TODO], [TODO],
+  [STOCK-009], [TODO], [TODO], [TODO],
+  [STOCK-010], [TODO], [TODO], [TODO],
+)
+
+=== 测试结果分析
+
+TODO：对股票查看模块的测试结果进行分析。重点关注：
++ NORMAL_ADMIN 与 SENIOR_ADMIN 的股票范围差异是否正确；
++ 关键字搜索的模糊匹配与空值处理；
++ TRADE 服务异常时 ADMIN 的容错行为；
++ 行情数据与委托簿数据的字段完整性。
+
+=== 测试结果截图
+
+// TODO：插入股票查看测试截图
+// #image("images/test/stocks_list.png", width: 85%)
+// #image("images/test/stocks_quote.png", width: 85%)
+
+#pagebreak()
+
+// ---- 2.3 涨跌停设置模块 ----
+
+== 涨跌停设置模块（Limits）功能测试
+
+=== API 端点
+
+#table(
+  columns: (0.1fr, 0.35fr, 0.2fr, 0.35fr),
+  [*方法*], [*路径*], [*鉴权*], [*说明*],
+  [PUT], [`/api/v1/admin/stocks/{code}/limits`], [Bearer Token (SENIOR_ADMIN)], [设置涨跌停比例],
+)
+
+=== 测试用例
+
+#table(
+  columns: (0.07fr, 0.14fr, 0.15fr, 0.07fr, 0.18fr, 0.12fr, 0.27fr),
+  [*编号*], [*测试功能*], [*测试标题*], [*级别*], [*预置条件*], [*输入*], [*操作步骤与预期输出*],
+  [LIMIT-001], [涨跌停设置], [高级管理员正常设置], [高], [SENIOR_ADMIN 登录，有股票权限], [limit_up=0.10, limit_down=0.10], [操作步骤：1) 选择股票；2) 输入涨跌幅比例各 10%；3) 提交。\ 预期输出：200，返回涨停价、跌停价（TRADE计算），提示次日生效。],
+  [LIMIT-002], [权限校验], [普通管理员无权设置], [高], [NORMAL_ADMIN 登录], [PUT limits], [操作步骤：普通管理员尝试设置涨跌停。\ 预期输出：403，"仅高级管理员可设置涨跌停"。],
+  [LIMIT-003], [权限校验], [审计管理员无权设置], [高], [AUDIT_ADMIN 登录], [PUT limits], [操作步骤：审计管理员尝试设置涨跌停。\ 预期输出：403。],
+  [LIMIT-004], [比例校验], [涨幅为 0], [高], [SENIOR_ADMIN 登录], [limit_up_ratio=0], [操作步骤：传入涨幅 0。\ 预期输出：422，涨跌停比例需在合法范围内。],
+  [LIMIT-005], [比例校验], [普通股涨幅超过 10%], [高], [SENIOR_ADMIN 登录], [limit_up_ratio=0.15], [操作步骤：传入涨幅 15%。\ 预期输出：422，"涨跌停比例不得超过10%"。],
+  [LIMIT-006], [比例校验], [跌幅为 0], [高], [SENIOR_ADMIN 登录], [limit_down_ratio=0], [操作步骤：传入跌幅 0。\ 预期输出：422。],
+  [LIMIT-007], [格式校验], [比例格式无效], [中], [SENIOR_ADMIN 登录], [limit_up_ratio="abc"], [操作步骤：传入非数字的比例。\ 预期输出：422，"涨跌停比例格式无效"。],
+  [LIMIT-008], [权限校验], [设置未授权股票], [高], [SENIOR_ADMIN 无该股票权限], [PUT /stocks/{未授权股票}/limits], [操作步骤：对无权限的股票设置涨跌停。\ 预期输出：返回错误"管理员无该股票权限"。],
+  [LIMIT-009], [生效日期], [指定生效日期], [中], [SENIOR_ADMIN 登录], [effective_date="2026-06-10"], [操作步骤：设置涨跌停时附带生效日期。\ 预期输出：设置成功，响应中包含生效日期。],
+  [LIMIT-010], [审计日志], [设置后产生审计记录], [中], [LIMIT-001 执行成功], [—], [操作步骤：成功设置涨跌停后查询 operation_log 表。\ 预期输出：新增一条 LIMIT_SET 类型操作记录。],
+)
+
+=== 测试结果
+
+#table(
+  columns: (0.07fr, 0.41fr, 0.1fr, 0.42fr),
+  [*编号*], [*实际输出*], [*是否通过*], [*备注*],
+  [LIMIT-001], [TODO], [TODO], [TODO],
+  [LIMIT-002], [TODO], [TODO], [TODO],
+  [LIMIT-003], [TODO], [TODO], [TODO],
+  [LIMIT-004], [TODO], [TODO], [TODO],
+  [LIMIT-005], [TODO], [TODO], [TODO],
+  [LIMIT-006], [TODO], [TODO], [TODO],
+  [LIMIT-007], [TODO], [TODO], [TODO],
+  [LIMIT-008], [TODO], [TODO], [TODO],
+  [LIMIT-009], [TODO], [TODO], [TODO],
+  [LIMIT-010], [TODO], [TODO], [TODO],
+)
+
+=== 测试结果分析
+
+TODO：对涨跌停设置模块的测试结果进行分析。重点关注：
++ 比例校验边界的正确性（普通股 ≤ 10%、ST 股 ≤ 5%）；
++ 角色权限隔离是否完全生效；
++ TRADE 价格计算与返回的准确性；
++ 审计日志的记录完整度。
+
+=== 测试结果截图
+
+// TODO：插入涨跌停设置测试截图
+// #image("images/test/limits_set.png", width: 85%)
+// #image("images/test/limits_error.png", width: 85%)
+
+#pagebreak()
+
+// ---- 2.4 交易控制模块 ----
+
+== 交易控制模块（Trade Control）功能测试
+
+=== API 端点
+
+#table(
+  columns: (0.1fr, 0.35fr, 0.2fr, 0.35fr),
+  [*方法*], [*路径*], [*鉴权*], [*说明*],
+  [POST], [`/api/v1/admin/stocks/{code}/pause`], [Bearer Token (SENIOR_ADMIN)], [暂停股票交易],
+  [POST], [`/api/v1/admin/stocks/{code}/resume`], [Bearer Token (SENIOR_ADMIN)], [重启股票交易],
+)
+
+=== 测试用例
+
+#table(
+  columns: (0.07fr, 0.14fr, 0.15fr, 0.07fr, 0.18fr, 0.12fr, 0.27fr),
+  [*编号*], [*测试功能*], [*测试标题*], [*级别*], [*预置条件*], [*输入*], [*操作步骤与预期输出*],
+  [CTRL-001], [交易暂停], [高级管理员暂停交易], [高], [SENIOR_ADMIN 登录，股票状态为 OPEN], [POST /stocks/600000/pause + pause_reason], [操作步骤：1) 选择股票；2) 填写暂停原因；3) 点击暂停并确认。\ 预期输出：200，"股票600000已暂停交易"。操作日志记录成功。],
+  [CTRL-002], [交易重启], [高级管理员重启交易], [高], [SENIOR_ADMIN 登录，股票已暂停], [POST /stocks/600000/resume + resume_reason], [操作步骤：1) 选择已暂停股票；2) 点击重启。\ 预期输出：200，"股票600000已重启交易"。操作日志记录成功。],
+  [CTRL-003], [权限校验], [普通管理员无权暂停], [高], [NORMAL_ADMIN 登录], [POST /stocks/600000/pause], [操作步骤：普通管理员尝试暂停。\ 预期输出：403，"仅高级管理员可暂停交易"。],
+  [CTRL-004], [权限校验], [普通管理员无权重启], [高], [NORMAL_ADMIN 登录], [POST /stocks/600000/resume], [操作步骤：普通管理员尝试重启。\ 预期输出：403，"仅高级管理员可重启交易"。],
+  [CTRL-005], [状态校验], [暂停已暂停的股票], [中], [股票已处于 PAUSED], [再次暂停], [操作步骤：对已暂停的股票再次暂停。\ 预期输出：由 TRADE 返回相应冲突错误。],
+  [CTRL-006], [状态校验], [重启未暂停的股票], [中], [股票处于正常 OPEN 状态], [直接重启], [操作步骤：对正常交易的股票执行重启。\ 预期输出：由 TRADE 返回相应冲突错误。],
+  [CTRL-007], [审计日志], [暂停操作产生审计记录], [中], [CTRL-001 执行成功], [—], [操作步骤：暂停操作完成后查询 operation_log。\ 预期输出：新增 TRADE_CONTROL 类型记录。],
+  [CTRL-008], [异常容错], [TRADE 不可达时暂停], [中], [停止 TRADE], [POST /stocks/600000/pause], [操作步骤：TRADE 停止时执行暂停。\ 预期输出：返回 ADMIN_UPSTREAM_ERROR（502）。],
+)
+
+=== 测试结果
+
+#table(
+  columns: (0.07fr, 0.41fr, 0.1fr, 0.42fr),
+  [*编号*], [*实际输出*], [*是否通过*], [*备注*],
+  [CTRL-001], [TODO], [TODO], [TODO],
+  [CTRL-002], [TODO], [TODO], [TODO],
+  [CTRL-003], [TODO], [TODO], [TODO],
+  [CTRL-004], [TODO], [TODO], [TODO],
+  [CTRL-005], [TODO], [TODO], [TODO],
+  [CTRL-006], [TODO], [TODO], [TODO],
+  [CTRL-007], [TODO], [TODO], [TODO],
+  [CTRL-008], [TODO], [TODO], [TODO],
+)
+
+=== 测试结果分析
+
+TODO：对交易控制模块的测试结果进行分析。
+
+=== 测试结果截图
+
+// TODO：插入交易控制测试截图
+// #image("images/test/ctrl_pause.png", width: 85%)
+// #image("images/test/ctrl_resume.png", width: 85%)
+
+#pagebreak()
+
+// ---- 2.5 交易日管理模块 ----
+
+== 交易日管理模块（Trading Days）功能测试
+
+=== API 端点
+
+#table(
+  columns: (0.1fr, 0.35fr, 0.2fr, 0.35fr),
+  [*方法*], [*路径*], [*鉴权*], [*说明*],
+  [POST], [`/api/v1/admin/trading-days/open`], [Bearer Token (SENIOR_ADMIN)], [交易日开盘],
+  [POST], [`/api/v1/admin/trading-days/close`], [Bearer Token (SENIOR_ADMIN)], [交易日收盘],
+)
+
+=== 测试用例
+
+#table(
+  columns: (0.07fr, 0.14fr, 0.15fr, 0.07fr, 0.18fr, 0.12fr, 0.27fr),
+  [*编号*], [*测试功能*], [*测试标题*], [*级别*], [*预置条件*], [*输入*], [*操作步骤与预期输出*],
+  [TD-001], [交易日管理], [高级管理员开启交易日], [高], [SENIOR_ADMIN 登录，交易日未开始], [POST /trading-days/open + trade_date], [操作步骤：1) 进入交易日管理区；2) 输入交易日期；3) 点击"交易日开始"并确认。\ 预期输出：200，TRADE 启动撮合引擎。操作日志记录成功。],
+  [TD-002], [交易日管理], [高级管理员结束交易日], [高], [SENIOR_ADMIN 登录，交易日进行中], [POST /trading-days/close + reason], [操作步骤：1) 点击"交易日结束"；2) 二次确认。\ 预期输出：200，TRADE 停止撮合、过期未成交指令、释放冻结资源。操作日志记录成功。],
+  [TD-003], [权限校验], [普通管理员无权操作], [高], [NORMAL_ADMIN 登录], [POST 开/收盘], [操作步骤：普通管理员尝试发起交易日开始/结束。\ 预期输出：403，"仅高级管理员可管理交易日"。],
+  [TD-004], [参数校验], [缺少日期参数], [中], [SENIOR_ADMIN 登录], [trade_date 为空], [操作步骤：不填写日期直接提交。\ 预期输出：422，Schema 校验失败。],
+  [TD-005], [状态校验], [重复开盘], [中], [当日已开盘], [再次 POST /trading-days/open], [操作步骤：在已开始的交易日再次点击开盘。\ 预期输出：由 TRADE 返回相应冲突错误。],
+  [TD-006], [审计日志], [交易日操作产生审计记录], [中], [TD-001/TD-002 执行成功], [—], [操作步骤：开盘或收盘后查询 operation_log。\ 预期输出：新增 TRADING_DAY 类型记录。],
+)
+
+=== 测试结果
+
+#table(
+  columns: (0.07fr, 0.41fr, 0.1fr, 0.42fr),
+  [*编号*], [*实际输出*], [*是否通过*], [*备注*],
+  [TD-001], [TODO], [TODO], [TODO],
+  [TD-002], [TODO], [TODO], [TODO],
+  [TD-003], [TODO], [TODO], [TODO],
+  [TD-004], [TODO], [TODO], [TODO],
+  [TD-005], [TODO], [TODO], [TODO],
+  [TD-006], [TODO], [TODO], [TODO],
+)
+
+=== 测试结果分析
+
+TODO：对交易日管理模块的测试结果进行分析。
+
+=== 测试结果截图
+
+// TODO：插入交易日管理测试截图
+// #image("images/test/td_open.png", width: 85%)
+// #image("images/test/td_close.png", width: 85%)
+
+#pagebreak()
+
+// ---- 2.6 密码管理模块 ----
+
+== 密码管理模块（Password）功能测试
+
+=== API 端点
+
+密码修改功能复用认证模块的 `POST /api/v1/admin/auth/password` 端点，前端通过 `/password` 页面提供交互。
+
+=== 测试用例
+
+本模块的测试用例已包含在认证模块中（AUTH-011 至 AUTH-015），此处进行补充汇总。
+
+#table(
+  columns: (0.07fr, 0.14fr, 0.15fr, 0.07fr, 0.18fr, 0.12fr, 0.27fr),
+  [*编号*], [*测试功能*], [*测试标题*], [*级别*], [*预置条件*], [*输入*], [*操作步骤与预期输出*],
+  [PWD-001], [密码修改], [正确修改密码（汇总验证）], [高], [已登录]， [原密码=Admin@123, 新密码=NewPass@5678, 确认=NewPass@5678], [操作步骤：1) 进入密码修改页面；2) 输入原密码和新密码及确认；3) 提交。\ 预期输出：密码修改成功，token_version 自增，强制跳转登录页，旧 JWT 失效。],
+  [PWD-002], [前端校验], [新密码强度实时指示], [中], [已登录], [逐步输入密码], [操作步骤：在密码修改页面逐步输入新密码。\ 预期输出：前端实时显示密码强度指示器（弱/中/强）。],
+  [PWD-003], [前端校验], [确认密码不一致时阻止提交], [中], [已登录], [新密码 ≠ 确认密码], [操作步骤：输入不一致的确认密码。\ 预期输出：前端校验拦截，提示"两次输入的新密码不一致"。],
+)
+
+=== 测试结果
+
+#table(
+  columns: (0.07fr, 0.41fr, 0.1fr, 0.42fr),
+  [*编号*], [*实际输出*], [*是否通过*], [*备注*],
+  [PWD-001], [TODO], [TODO], [TODO],
+  [PWD-002], [TODO], [TODO], [TODO],
+  [PWD-003], [TODO], [TODO], [TODO],
+)
+
+=== 测试结果分析
+
+TODO：对密码管理模块的测试结果进行分析。
+
+=== 测试结果截图
+
+// TODO：插入密码修改测试截图
+// #image("images/test/password_change.png", width: 60%)
+
+#pagebreak()
+
+// ---- 2.7 权限管理模块 ----
+
+== 权限管理模块（Permissions）功能测试
+
+=== API 端点
+
+#table(
+  columns: (0.1fr, 0.35fr, 0.2fr, 0.35fr),
+  [*方法*], [*路径*], [*鉴权*], [*说明*],
+  [GET], [`/api/v1/admin/admins`], [Bearer Token (SYSTEM_ADMIN)], [获取所有管理员列表],
+  [PUT], [`/api/v1/admin/admins/{id}/permissions`], [Bearer Token (SYSTEM_ADMIN)], [修改管理员权限],
+)
+
+=== 测试用例
+
+#table(
+  columns: (0.07fr, 0.14fr, 0.15fr, 0.07fr, 0.18fr, 0.12fr, 0.27fr),
+  [*编号*], [*测试功能*], [*测试标题*], [*级别*], [*预置条件*], [*输入*], [*操作步骤与预期输出*],
+  [PERM-001], [管理员列表], [系统管理员查看所有管理员], [高], [SYSTEM_ADMIN 登录], [GET /admins], [操作步骤：系统管理员进入权限管理页面。\ 预期输出：返回所有管理员信息，含角色、状态、授权股票、最后登录时间。],
+  [PERM-002], [权限校验], [非系统管理员无权查看], [高], [NORMAL_ADMIN / SENIOR_ADMIN 登录], [GET /admins], [操作步骤：非系统管理员尝试访问。\ 预期输出：403。],
+  [PERM-003], [权限修改], [修改管理员角色], [高], [SYSTEM_ADMIN 登录], [PUT /admins/{id}/permissions，role=NORMAL→SENIOR], [操作步骤：1) 选择某管理员；2) 将其角色从普通管理员调整为高级管理员；3) 提交。\ 预期输出：200，"权限更新成功"。操作日志写入变更前后值。],
+  [PERM-004], [权限修改], [修改管理员状态(禁用)], [高], [SYSTEM_ADMIN 登录], [PUT status=active→disabled], [操作步骤：1) 选择某管理员；2) 将其状态改为 disabled；3) 提交。\ 预期输出：200，该管理员 token_version+1，旧令牌全部失效。],
+  [PERM-005], [权限修改], [修改股票授权范围], [高], [SYSTEM_ADMIN 登录], [PUT authorized_stocks=["600000","000001"]] , [操作步骤：1) 选择某普通管理员；2) 调整授权股票代码列表；3) 提交。\ 预期输出：200，授权范围更新成功。],
+  [PERM-006], [异常处理], [目标管理员不存在], [中], [SYSTEM_ADMIN 登录], [PUT /admins/999/permissions], [操作步骤：对不存在的 admin_id 执行修改。\ 预期输出：404，"目标管理员不存在"。],
+  [PERM-007], [参数校验], [无效角色], [中], [SYSTEM_ADMIN 登录], [role="INVALID_ROLE"], [操作步骤：传入不存在的角色值。\ 预期输出：422，"无效角色"。],
+  [PERM-008], [参数校验], [无效状态], [中], [SYSTEM_ADMIN 登录], [status="unknown"], [操作步骤：传入不合法的状态值。\ 预期输出：422，"无效状态"。],
+  [PERM-009], [权限校验], [修改自身权限], [中], [SYSTEM_ADMIN 登录], [修改自己的 permissions], [操作步骤：尝试编辑自己的角色或状态。\ 预期输出：根据业务规则（允许或拒绝），需明确设计意图。],
+  [PERM-010], [审计日志], [权限变更产生审计记录], [中], [任何权限变更成功], [—], [操作步骤：权限修改后查询 operation_log。\ 预期输出：新增 PERMISSION 记录，包含变更前后值。],
+)
+
+=== 测试结果
+
+#table(
+  columns: (0.07fr, 0.41fr, 0.1fr, 0.42fr),
+  [*编号*], [*实际输出*], [*是否通过*], [*备注*],
+  [PERM-001], [TODO], [TODO], [TODO],
+  [PERM-002], [TODO], [TODO], [TODO],
+  [PERM-003], [TODO], [TODO], [TODO],
+  [PERM-004], [TODO], [TODO], [TODO],
+  [PERM-005], [TODO], [TODO], [TODO],
+  [PERM-006], [TODO], [TODO], [TODO],
+  [PERM-007], [TODO], [TODO], [TODO],
+  [PERM-008], [TODO], [TODO], [TODO],
+  [PERM-009], [TODO], [TODO], [TODO],
+  [PERM-010], [TODO], [TODO], [TODO],
+)
+
+=== 测试结果分析
+
+TODO：对权限管理模块的测试结果进行分析。
+
+=== 测试结果截图
+
+// TODO：插入权限管理测试截图
+// #image("images/test/perm_admin_list.png", width: 85%)
+// #image("images/test/perm_edit.png", width: 85%)
+
+#pagebreak()
+
+// ---- 2.8 审计日志模块 ----
+
+== 审计日志模块（Audit）功能测试
+
+=== API 端点
+
+#table(
+  columns: (0.1fr, 0.35fr, 0.2fr, 0.35fr),
+  [*方法*], [*路径*], [*鉴权*], [*说明*],
+  [GET], [`/api/v1/admin/audit/operation-logs`], [Bearer Token (AUDIT/SYSTEM)], [查询操作日志（分页+筛选）],
+  [GET], [`/api/v1/admin/audit/login-logs`], [Bearer Token (AUDIT/SYSTEM)], [查询登录日志（分页+筛选）],
+  [GET], [`/api/v1/admin/audit/logs/export`], [Bearer Token (AUDIT/SYSTEM)], [导出日志为 CSV],
+  [DELETE], [`/api/v1/admin/audit/logs`], [Bearer Token (AUDIT/SYSTEM)], [删除日志],
+)
+
+=== 测试用例
+
+#table(
+  columns: (0.07fr, 0.14fr, 0.15fr, 0.07fr, 0.18fr, 0.12fr, 0.27fr),
+  [*编号*], [*测试功能*], [*测试标题*], [*级别*], [*预置条件*], [*输入*], [*操作步骤与预期输出*],
+  [AUDIT-001], [操作日志], [审计管理员查询操作日志], [高], [AUDIT_ADMIN 登录，数据库有日志], [GET /audit/operation-logs], [操作步骤：审计管理员进入操作日志 Tab。\ 预期输出：分页返回操作日志列表。],
+  [AUDIT-002], [操作日志], [系统管理员也可查询], [高], [SYSTEM_ADMIN 登录], [GET /audit/operation-logs], [操作步骤：系统管理员进入审计页面。\ 预期输出：正常返回操作日志列表。],
+  [AUDIT-003], [权限校验], [普通/高级管理员无权访问], [高], [NORMAL_ADMIN / SENIOR_ADMIN 登录], [GET /audit/operation-logs], [操作步骤：非审计/系统管理员尝试访问。\ 预期输出：403，前端菜单隐藏。],
+  [AUDIT-004], [筛选功能], [按管理员 ID 筛选], [高], [有多条日志，AUDIT_ADMIN 登录], [GET ?admin_id=2], [操作步骤：选择目标管理员后查询。\ 预期输出：仅返回该管理员的操作日志。],
+  [AUDIT-005], [筛选功能], [按操作类型筛选], [高], [有多条日志], [GET ?operation_type=LIMIT_SET], [操作步骤：选择"涨跌停设置"类型后查询。\ 预期输出：仅返回 LIMIT_SET 类型的日志。],
+  [AUDIT-006], [筛选功能], [按时间范围筛选], [中], [有多条日志], [GET ?start_time=...&end_time=...], [操作步骤：选择起始和结束时间后查询。\ 预期输出：仅返回时间范围内的日志。],
+  [AUDIT-007], [分页功能], [正常分页], [中], [超过 20 条日志], [GET ?page=2&page_size=10], [操作步骤：切换到第2页。\ 预期输出：返回第2页数据，每页10条。],
+  [AUDIT-008], [分页功能], [分页边界], [低], [数据不足一页], [GET ?page=1&page_size=100], [操作步骤：请求超过实际数据量的 page_size。\ 预期输出：正常返回（page_size 上限100），不报错。],
+  [AUDIT-009], [登录日志], [查询登录日志], [高], [AUDIT_ADMIN 登录，有登录日志], [GET /audit/login-logs], [操作步骤：切换到登录日志 Tab。\ 预期输出：返回登录/登出记录，字段完整。],
+  [AUDIT-010], [CSV 导出], [导出操作日志], [中], [有操作日志数据], [GET /audit/logs/export?log_type=operation], [操作步骤：点击"导出操作日志"按钮。\ 预期输出：下载 CSV 文件，字段完整。],
+  [AUDIT-011], [CSV 导出], [导出登录日志], [中], [有登录日志数据], [GET /audit/logs/export?log_type=login], [操作步骤：点击"导出登录日志"按钮。\ 预期输出：下载 CSV 文件。],
+  [AUDIT-012], [CSV 导出], [导出时应用筛选条件], [中], [有多条数据], [带 admin_id + 时间参数导出], [操作步骤：设置筛选条件后导出。\ 预期输出：仅导出符合条件的数据。],
+  [AUDIT-013], [日志删除], [删除操作日志], [中], [有可删除的日志], [DELETE /audit/logs?log_type=operation&before=...], [操作步骤：1) 指定日期；2) 二次确认后删除。\ 预期输出：返回"已删除N条日志"，被删除日志不可恢复。],
+  [AUDIT-014], [日志删除], [按日期指定删除范围], [中], [有多条跨日期日志], [DELETE ?log_type=login&before=2026-01-01], [操作步骤：指定 before 参数删除旧日志。\ 预期输出：仅删除 before 日期之前的登录日志。],
+  [AUDIT-015], [参数校验], [日期格式无效], [中], [AUDIT_ADMIN 登录], [before="abc"], [操作步骤：传入无效的日期字符串。\ 预期输出：422，"日期格式无效"。],
+  [AUDIT-016], [参数校验], [log_type 参数无效], [中], [AUDIT_ADMIN 登录], [log_type=invalid], [操作步骤：传入无效的 log_type。\ 预期输出：422（pattern 校验失败）。],
+)
+
+=== 测试结果
+
+#table(
+  columns: (0.07fr, 0.41fr, 0.1fr, 0.42fr),
+  [*编号*], [*实际输出*], [*是否通过*], [*备注*],
+  [AUDIT-001], [TODO], [TODO], [TODO],
+  [AUDIT-002], [TODO], [TODO], [TODO],
+  [AUDIT-003], [TODO], [TODO], [TODO],
+  [AUDIT-004], [TODO], [TODO], [TODO],
+  [AUDIT-005], [TODO], [TODO], [TODO],
+  [AUDIT-006], [TODO], [TODO], [TODO],
+  [AUDIT-007], [TODO], [TODO], [TODO],
+  [AUDIT-008], [TODO], [TODO], [TODO],
+  [AUDIT-009], [TODO], [TODO], [TODO],
+  [AUDIT-010], [TODO], [TODO], [TODO],
+  [AUDIT-011], [TODO], [TODO], [TODO],
+  [AUDIT-012], [TODO], [TODO], [TODO],
+  [AUDIT-013], [TODO], [TODO], [TODO],
+  [AUDIT-014], [TODO], [TODO], [TODO],
+  [AUDIT-015], [TODO], [TODO], [TODO],
+  [AUDIT-016], [TODO], [TODO], [TODO],
+)
+
+=== 测试结果分析
+
+TODO：对审计日志模块的测试结果进行分析。重点关注：
++ 操作日志与登录日志的分页与筛选功能是否正常；
++ CSV 导出字段完整性与编码正确性（UTF-8 BOM）；
++ 日志删除的二次确认与 before 参数边界；
++ AUDIT_ADMIN 与 SYSTEM_ADMIN 的权限差异。
+
+=== 测试结果截图
+
+// TODO：插入审计模块测试截图
+// #image("images/test/audit_list.png", width: 85%)
+// #image("images/test/audit_export.png", width: 85%)
+
+#pagebreak()
+
+// ---- 2.9 健康检查模块 ----
+
+== 健康检查模块（Health Check）功能测试
+
+=== API 端点
+
+#table(
+  columns: (0.1fr, 0.35fr, 0.2fr, 0.35fr),
+  [*方法*], [*路径*], [*鉴权*], [*说明*],
+  [GET], [`/health`], [无], [服务健康检查，检测 MySQL 与 TRADE 连通性],
+)
+
+=== 测试用例
+
+#table(
+  columns: (0.07fr, 0.14fr, 0.15fr, 0.07fr, 0.18fr, 0.12fr, 0.27fr),
+  [*编号*], [*测试功能*], [*测试标题*], [*级别*], [*预置条件*], [*输入*], [*操作步骤与预期输出*],
+  [HC-001], [健康检查], [全部依赖正常], [高], [MySQL + TRADE 均可用], [GET /health], [操作步骤：调用 /health。\ 预期输出：200，status=UP，dependencies.mysql=UP，dependencies.trade=UP。],
+  [HC-002], [健康检查], [MySQL 不可用], [高], [停止 MySQL], [GET /health], [操作步骤：停掉 MySQL 后调用。\ 预期输出：503，status=DEGRADED，dependencies.mysql=DOWN。],
+  [HC-003], [健康检查], [TRADE 不可用], [高], [停止 TRADE], [GET /health], [操作步骤：停掉 TRADE 后调用。\ 预期输出：503，status=DEGRADED，dependencies.trade=DOWN。],
+  [HC-004], [健康检查], [全部依赖不可用], [中], [MySQL + TRADE 均停止], [GET /health], [操作步骤：全部依赖停止后调用。\ 预期输出：503，status=DEGRADED。],
+)
+
+=== 测试结果
+
+#table(
+  columns: (0.07fr, 0.41fr, 0.1fr, 0.42fr),
+  [*编号*], [*实际输出*], [*是否通过*], [*备注*],
+  [HC-001], [TODO], [TODO], [TODO],
+  [HC-002], [TODO], [TODO], [TODO],
+  [HC-003], [TODO], [TODO], [TODO],
+  [HC-004], [TODO], [TODO], [TODO],
+)
+
+=== 测试结果分析
+
+TODO：对健康检查模块的测试结果进行分析。
+
+=== 测试结果截图
+
+// TODO：插入健康检查测试截图
+// #image("images/test/health_up.png", width: 70%)
+// #image("images/test/health_degraded.png", width: 70%)
+
+#pagebreak()
+
+// ==================== 第3章 边界值与基路径测试 ====================
+
+= 边界值与基路径测试
+
+== 测试说明
+
+对系统外部输入进行边界值测试，并对模块中重要的执行路径进行基路径测试。边界值测试主要关注输入数据的边界条件（最小值、最大值、刚好超出等），基路径测试针对因错误计算、不正确比较或不正常控制流而导致的执行路径错误。
+
+== 认证模块边界值测试
+
+=== 测试用例
+
+#table(
+  columns: (0.07fr, 0.14fr, 0.15fr, 0.07fr, 0.18fr, 0.12fr, 0.27fr),
+  [*编号*], [*测试功能*], [*测试标题*], [*级别*], [*预置条件*], [*输入*], [*操作步骤与预期输出*],
+  [BND-001], [密码边界], [密码长度刚好8位通过], [中], [管理员已存在], [新密码=Abc12345（8位）], [操作步骤：修改密码为刚好8位。\ 预期输出：校验通过。],
+  [BND-002], [密码边界], [密码长度7位被拒绝], [中], [管理员已存在], [新密码=Abc1234（7位）], [操作步骤：修改密码为7位。\ 预期输出：422，长度不足。],
+  [BND-003], [密码边界], [密码含所有类别字符通过], [中], [管理员已存在], [密码=Abc123!@#（含大小写+数字+特殊字符）], [操作步骤：输入满足所有四类字符要求的密码。\ 预期输出：强度校验通过。],
+  [BND-004], [密码边界], [密码仅含两类字符被拒绝], [中], [管理员已存在], [密码=abc12345（仅小写+数字）], [操作步骤：输入仅含两类字符的密码。\ 预期输出：422，"至少含三类字符"。],
+  [BND-005], [用户名字段], [超长输入不导致崩溃], [低], [无], [用户名=100+字符的长字符串], [操作步骤：在用户名输入框输入超长字符串。\ 预期输出：前端或后端截断/拒绝，系统不崩溃。],
+  [BND-006], [锁定边界], [刚好失败4次未锁定], [高], [管理员账号], [连续4次错误密码后第5次正确], [操作步骤：连续4次错误后，第5次输入正确密码。\ 预期输出：第5次登录成功，failed_attempts 清零。],
+  [BND-007], [锁定边界], [失败5次触发锁定], [高], [管理员账号]， [连续5次错误密码], [操作步骤：连续5次输入错误密码。\ 预期输出：第5次后账号锁定，lock_until = now + 5分钟。],
+  [BND-008], [锁定边界], [锁定刚好到期自动解锁], [高], [账号锁定刚好满5分钟], [锁定到期时刻的正确密码], [操作步骤：锁定刚好5分钟后，输入正确密码登录。\ 预期输出：自动解锁，登录成功。],
+)
+
+=== 测试结果
+
+#table(
+  columns: (0.07fr, 0.41fr, 0.1fr, 0.42fr),
+  [*编号*], [*实际输出*], [*是否通过*], [*备注*],
+  [BND-001], [TODO], [TODO], [TODO],
+  [BND-002], [TODO], [TODO], [TODO],
+  [BND-003], [TODO], [TODO], [TODO],
+  [BND-004], [TODO], [TODO], [TODO],
+  [BND-005], [TODO], [TODO], [TODO],
+  [BND-006], [TODO], [TODO], [TODO],
+  [BND-007], [TODO], [TODO], [TODO],
+  [BND-008], [TODO], [TODO], [TODO],
+)
+
+=== 测试结果分析
+
+TODO：对认证模块的边界值测试结果进行分析。
+
+=== 测试结果截图
+
+// TODO：插入边界值测试截图
+// #image("images/test/bnd_login.png", width: 80%)
+
+#pagebreak()
+
+== 涨跌停设置模块边界值测试
+
+=== 测试用例
+
+#table(
+  columns: (0.07fr, 0.14fr, 0.15fr, 0.07fr, 0.18fr, 0.12fr, 0.27fr),
+  [*编号*], [*测试功能*], [*测试标题*], [*级别*], [*预置条件*], [*输入*], [*操作步骤与预期输出*],
+  [BND-009], [比例边界], [普通股涨幅刚好 10%], [高], [SENIOR_ADMIN 登录], [limit_up=0.10], [操作步骤：输入涨幅刚好 10%。\ 预期输出：校验通过，为合法边界值。],
+  [BND-010], [比例边界], [普通股涨幅 10.01% 被拒绝], [高], [SENIOR_ADMIN 登录], [limit_up=0.1001], [操作步骤：输入涨幅 10.01%。\ 预期输出：422，超过合法范围。],
+  [BND-011], [比例边界], [ST 股涨幅刚好 5%], [高], [SENIOR_ADMIN 登录，目标为 ST 股], [limit_up=0.05], [操作步骤：对 ST 股输入涨幅刚好 5%。\ 预期输出：校验通过。],
+  [BND-012], [比例边界], [ST 股涨幅 5.01% 被拒绝], [高], [SENIOR_ADMIN 登录，目标为 ST 股], [limit_up=0.0501], [操作步骤：对 ST 股输入 5.01%。\ 预期输出：422。],
+  [BND-013], [比例边界], [涨跌幅为 0], [中], [SENIOR_ADMIN 登录], [limit_up=0, limit_down=0], [操作步骤：输入 0%。\ 预期输出：422，比例需在合法范围内。],
+  [BND-014], [比例边界], [涨跌幅为负数], [中], [SENIOR_ADMIN 登录], [limit_up=-0.05], [操作步骤：输入负数涨幅。\ 预期输出：422，比例格式无效或范围错误。],
+)
+
+=== 测试结果
+
+#table(
+  columns: (0.07fr, 0.41fr, 0.1fr, 0.42fr),
+  [*编号*], [*实际输出*], [*是否通过*], [*备注*],
+  [BND-009], [TODO], [TODO], [TODO],
+  [BND-010], [TODO], [TODO], [TODO],
+  [BND-011], [TODO], [TODO], [TODO],
+  [BND-012], [TODO], [TODO], [TODO],
+  [BND-013], [TODO], [TODO], [TODO],
+  [BND-014], [TODO], [TODO], [TODO],
+)
+
+=== 测试结果分析
+
+TODO：对涨跌停设置模块的边界值测试结果进行分析。
+
+=== 测试结果截图
+
+// TODO：插入涨跌停边界值测试截图
+// #image("images/test/bnd_limits.png", width: 80%)
+
+#pagebreak()
+
+== 搜索与审计模块边界值测试
+
+=== 测试用例
+
+#table(
+  columns: (0.07fr, 0.14fr, 0.15fr, 0.07fr, 0.18fr, 0.12fr, 0.27fr),
+  [*编号*], [*测试功能*], [*测试标题*], [*级别*], [*预置条件*], [*输入*], [*操作步骤与预期输出*],
+  [BND-015], [搜索边界], [关键字为空], [中], [管理员已登录], [keyword=空], [操作步骤：不输入关键字点击搜索。\ 预期输出：返回全部授权股票（等同于不筛选）。],
+  [BND-016], [搜索边界], [关键字含 SQL 通配符], [中], [管理员已登录], [keyword=%_*], [操作步骤：输入 SQL 通配符字符。\ 预期输出：后端转义处理，不触发 SQL 注入，正常返回。],
+  [BND-017], [搜索边界], [关键字含 HTML 标签], [中], [管理员已登录], [keyword=<script>alert(1)</script>], [操作步骤：输入 XSS 攻击向量。\ 预期输出：前端渲染时转义为纯文本，不执行脚本。],
+  [BND-018], [分页边界], [page_size 为 0], [中], [AUDIT_ADMIN 登录], [GET /audit/logs?page_size=0], [操作步骤：请求 0 条每页。\ 预期输出：422 或自动调整为默认值。],
+  [BND-019], [分页边界], [page_size 超过上限], [中], [AUDIT_ADMIN 登录], [GET /audit/logs?page_size=1000], [操作步骤：请求超过上限的 page_size。\ 预期输出：自动限制为最大值（如 100），不报错。],
+)
+
+=== 测试结果
+
+#table(
+  columns: (0.07fr, 0.41fr, 0.1fr, 0.42fr),
+  [*编号*], [*实际输出*], [*是否通过*], [*备注*],
+  [BND-015], [TODO], [TODO], [TODO],
+  [BND-016], [TODO], [TODO], [TODO],
+  [BND-017], [TODO], [TODO], [TODO],
+  [BND-018], [TODO], [TODO], [TODO],
+  [BND-019], [TODO], [TODO], [TODO],
+)
+
+=== 测试结果分析
+
+TODO：对搜索与审计模块的边界值测试结果进行分析。
+
+=== 测试结果截图
+
+// TODO：插入搜索边界值测试截图
+// #image("images/test/bnd_search.png", width: 80%)
+
+#pagebreak()
+
+// ==================== 第4章 API 集成测试 ====================
+
+= API 集成测试
+
+== 测试说明
+
+API 集成测试是本次测试的核心层次，使用 pytest + httpx 对 ADMIN 后端的所有 REST API 端点进行自动化测试。集成测试关注以下方面：
+
++ 统一响应格式校验；
++ JWT 认证与 RBAC 权限生效验证；
++ 数据库 CRUD 操作的完整性与事务一致性；
++ 对 TRADE 外部服务的调用与异常处理（Mock TradeClient 以隔离外部依赖）。
+
+== 统一响应格式
+
+所有 API 应遵循统一响应格式：
+
+```json
+{
+  "success": true | false,
+  "code": "OK" | "ERROR_CODE",
+  "message": "...",
+  "data": {...},
+  "request_id": null,
+  "timestamp": "2026-06-05T..."
+}
+```
+
+集成测试应校验：
++ 成功响应 `success=true`，`code="OK"`；
++ 失败响应 `success=false`，`code` 为具体错误码；
++ `timestamp` 字段存在且为 ISO 8601 格式；
++ 列表类接口返回分页结构（`items`、`total`、`page`、`page_size`）。
+
+== 推荐测试脚本结构
+
+```
+tests/
+├── conftest.py              # fixtures: db session, test client, auth headers
+├── test_auth.py             # AUTH-001 ~ AUTH-017
+├── test_stocks.py           # STOCK-001 ~ STOCK-010
+├── test_limits.py           # LIMIT-001 ~ LIMIT-010
+├── test_trade_control.py    # CTRL-001 ~ CTRL-008
+├── test_trading_days.py     # TD-001 ~ TD-006
+├── test_permissions.py      # PERM-001 ~ PERM-010
+├── test_audit.py            # AUDIT-001 ~ AUDIT-016
+├── test_health.py           # HC-001 ~ HC-004
+└── factories/               # 测试数据工厂
+    ├── admin_factory.py
+    └── log_factory.py
+```
+
+== 关键 Test Fixture 设计
+
+#table(
+  columns: (0.25fr, 0.75fr),
+  [*Fixture*], [*作用*],
+  [`client`], [FastAPI TestClient (app)，提供同步 HTTP 测试能力],
+  [`db_session`], [独立测试数据库会话，每次测试后自动回滚，保证用例隔离],
+  [`normal_token`], [预登录的 NORMAL_ADMIN JWT，用于普通管理员权限测试],
+  [`senior_token`], [预登录的 SENIOR_ADMIN JWT，用于高级管理员权限测试],
+  [`system_token`], [预登录的 SYSTEM_ADMIN JWT，用于系统管理员权限测试],
+  [`audit_token`], [预登录的 AUDIT_ADMIN JWT，用于审计管理员权限测试],
+  [`mock_trade_client`], [Mock TradeClient，隔离 TRADE 外部依赖，模拟正常返回/异常/超时等场景],
+)
+
+== TradeClient Mock 要点
+
+TRADE 服务为独立外部依赖，集成测试时建议 Mock `TradeClient`，覆盖以下场景：
+
++ 正常返回行情数据（MarketQuote）；
++ 正常返回涨跌停价格计算（limit_up_price, limit_down_price）；
++ 模拟 `TradeClientError` 异常（TRADE 返回 4xx/5xx）；
++ 模拟超时（`httpx.TimeoutException`）；
++ 模拟连接失败（`httpx.ConnectError`）；
++ 验证 ADMIN → TRADE 请求参数转换正确性。
+
+== 测试结果汇总
+
+TODO：汇总集成测试执行结果。
+
+#table(
+  columns: (0.2fr, 0.2fr, 0.2fr, 0.2fr, 0.2fr),
+  [*测试文件*], [*用例总数*], [*通过*], [*失败*], [*通过率*],
+  [test_auth.py], [TODO], [TODO], [TODO], [TODO],
+  [test_stocks.py], [TODO], [TODO], [TODO], [TODO],
+  [test_limits.py], [TODO], [TODO], [TODO], [TODO],
+  [test_trade_control.py], [TODO], [TODO], [TODO], [TODO],
+  [test_trading_days.py], [TODO], [TODO], [TODO], [TODO],
+  [test_permissions.py], [TODO], [TODO], [TODO], [TODO],
+  [test_audit.py], [TODO], [TODO], [TODO], [TODO],
+  [test_health.py], [TODO], [TODO], [TODO], [TODO],
+)
+
+#pagebreak()
+
+// ==================== 第5章 前端 / E2E 测试 ====================
+
+= 前端 / E2E 测试
+
+== 页面清单
+
+#table(
+  columns: (0.2fr, 0.3fr, 0.5fr),
+  [*路由*], [*页面*], [*所需角色*],
+  [`/login`], [登录页], [无（所有用户）],
+  [`/stocks`], [股票查看], [全部角色],
+  [`/limits`], [涨跌停设置], [SENIOR_ADMIN],
+  [`/trade-control`], [交易控制], [SENIOR_ADMIN],
+  [`/permissions`], [权限管理], [SYSTEM_ADMIN],
+  [`/audit`], [审计日志], [AUDIT_ADMIN, SYSTEM_ADMIN],
+  [`/password`], [密码修改], [全部角色（登录后）],
+)
+
+== 前端功能测试要点
+
+#table(
+  columns: (0.07fr, 0.35fr, 0.58fr),
+  [*编号*], [*测试项*], [*说明*],
+  [FE-001], [路由守卫——未登录拦截], [未登录状态访问 /stocks → 自动跳转 /login],
+  [FE-002], [路由守卫——角色权限], [NORMAL_ADMIN 访问 /permissions → 重定向 /stocks 或提示无权限],
+  [FE-003], [Token 过期自动处理], [API 返回 401 → 前端自动清除 localStorage 中的 token 并跳转登录页],
+  [FE-004], [登录表单校验], [用户名为空时点击登录 → 提示"请输入用户名"；密码为空时 → 提示"请输入密码"],
+  [FE-005], [登录成功跳转], [输入正确凭据 → 登录成功 → 根据角色跳转至对应默认页面],
+  [FE-006], [登录失败提示], [密码错误 → 显示后端返回的错误消息；账号锁定 → 显示"剩余X分Y秒"],
+  [FE-007], [股票列表自动加载], [进入 /stocks → 页面自动调用 API 加载股票列表并渲染],
+  [FE-008], [搜索实时过滤], [在股票搜索框输入关键词 → 列表实时过滤匹配结果],
+  [FE-009], [股票详情展示], [点击某只股票的"详情"按钮 → 弹出详情面板，显示行情描述列表或委托簿],
+  [FE-010], [涨跌停表单校验], [未选择股票直接提交 → 前端提示"请选择目标股票"],
+  [FE-011], [交易控制二次确认], [点击"交易日结束" → 弹出确认对话框 → 确认后才发送请求],
+  [FE-012], [审计日志分页], [点击分页器 → 加载对应页数据 → 页码状态更新],
+  [FE-013], [CSV 导出下载], [设置筛选条件后点击"导出" → 浏览器触发文件下载],
+  [FE-014], [权限管理编辑], [在管理员列表中编辑某管理员的角色/状态/授权范围 → 保存后列表刷新],
+  [FE-015], [密码修改表单校验], [确认密码与新密码不一致 → 前端"两次密码不一致"提示 + 提交按钮禁用],
+  [FE-016], [Loading 状态展示], [各页面数据加载中 → 显示 loading 动画或骨架屏],
+  [FE-017], [空数据状态展示], [列表无数据时 → 显示"暂无数据"提示文字或插图],
+  [FE-018], [API 网络异常处理], [API 不可达或返回 5xx → 前端显示错误提示，页面不崩溃],
+)
+
+== 前端测试结果
+
+#table(
+  columns: (0.07fr, 0.41fr, 0.1fr, 0.42fr),
+  [*编号*], [*实际表现*], [*是否通过*], [*备注*],
+  [FE-001], [TODO], [TODO], [TODO],
+  [FE-002], [TODO], [TODO], [TODO],
+  [FE-003], [TODO], [TODO], [TODO],
+  [FE-004], [TODO], [TODO], [TODO],
+  [FE-005], [TODO], [TODO], [TODO],
+  [FE-006], [TODO], [TODO], [TODO],
+  [FE-007], [TODO], [TODO], [TODO],
+  [FE-008], [TODO], [TODO], [TODO],
+  [FE-009], [TODO], [TODO], [TODO],
+  [FE-010], [TODO], [TODO], [TODO],
+  [FE-011], [TODO], [TODO], [TODO],
+  [FE-012], [TODO], [TODO], [TODO],
+  [FE-013], [TODO], [TODO], [TODO],
+  [FE-014], [TODO], [TODO], [TODO],
+  [FE-015], [TODO], [TODO], [TODO],
+  [FE-016], [TODO], [TODO], [TODO],
+  [FE-017], [TODO], [TODO], [TODO],
+  [FE-018], [TODO], [TODO], [TODO],
+)
+
+== E2E 测试建议
+
+推荐使用 Playwright 或 Cypress 进行冒烟级别的 E2E 测试，覆盖核心流程：
+
++ *流程1*：登录 → 查看股票列表 → 搜索股票 → 查看详情 → 登出
++ *流程2*（SENIOR_ADMIN）：登录 → 设置涨跌停 → 暂停股票 → 重启股票 → 交易日管理
++ *流程3*（SYSTEM_ADMIN）：登录 → 查看管理员列表 → 修改某管理员角色/授权 → 验证生效
++ *流程4*（AUDIT_ADMIN）：登录 → 查看操作日志 → 筛选 → 导出 CSV → 删除旧日志
+
+// TODO：插入 E2E 测试截图
+// #image("images/test/e2e_login_flow.png", width: 85%)
+
+#pagebreak()
+
+// ==================== 第6章 安全性测试 ====================
+
+= 安全性测试
+
+== 认证安全测试
+
+#table(
+  columns: (0.07fr, 0.2fr, 0.35fr, 0.38fr),
+  [*编号*], [*测试项*], [*测试方法*], [*预期结果*],
+  [SEC-001], [密码哈希存储], [直接查询 admin_info 表检查 password_hash 字段], [存储 bcrypt 哈希值，非明文密码],
+  [SEC-002], [JWT 签名验证], [使用错误密钥签名的 token 调用接口], [返回 401，签名校验失败],
+  [SEC-003], [Token 过期], [设置短过期时间（如 1min），过期后请求], [返回 401，提示令牌已过期],
+  [SEC-004], [Token Version 作废], [密码修改后使用旧 token 调用接口], [返回 401，"令牌已失效，请重新登录"],
+  [SEC-005], [暴力破解防护], [连续 5 次输入错误密码后尝试第 6 次], [第 6 次返回 403（锁定），非 401（密码错误），阻止暴力尝试],
+  [SEC-006], [密码强度策略], [尝试修改密码为不符合策略的值], [422，拒绝弱密码（长度 ≥ 8 + 3/4 类字符组合）],
+  [SEC-007], [SQL 注入防护], [在登录用户名 / 搜索关键词 / 筛选参数中注入 SQL 语句], [系统不执行注入的 SQL，返回空结果或 422，不泄露数据库信息],
+  [SEC-008], [XSS 防护], [在输入字段注入 `<script>alert(1)</script>` 标签], [前端渲染时转义为纯文本，不执行脚本],
+)
+
+== 授权安全测试
+
+#table(
+  columns: (0.07fr, 0.2fr, 0.35fr, 0.38fr),
+  [*编号*], [*测试项*], [*测试方法*], [*预期结果*],
+  [SEC-009], [水平越权防护], [NORMAL_ADMIN 尝试访问未授权股票的行情（STOCK-006）], [返回错误"管理员无该股票权限"或空结果],
+  [SEC-010], [垂直越权防护], [NORMAL_ADMIN 调用 POST /stocks/{code}/pause（CTRL-003）], [返回 403，角色校验生效],
+  [SEC-011], [角色枚举隔离], [依次使用 4 种角色令牌调用各 API，验证权限边界], [4 种角色权限边界完全隔离，无交叉泄漏],
+  [SEC-012], [直接对象引用防护], [通过修改 URL 参数 admin_id 尝试越权查看/修改其他管理员], [返回 403 或 404（不能区分存在性），防止枚举],
+)
+
+== 安全性测试结果汇总
+
+#table(
+  columns: (0.07fr, 0.41fr, 0.1fr, 0.42fr),
+  [*编号*], [*实际输出*], [*是否通过*], [*备注*],
+  [SEC-001], [TODO], [TODO], [TODO],
+  [SEC-002], [TODO], [TODO], [TODO],
+  [SEC-003], [TODO], [TODO], [TODO],
+  [SEC-004], [TODO], [TODO], [TODO],
+  [SEC-005], [TODO], [TODO], [TODO],
+  [SEC-006], [TODO], [TODO], [TODO],
+  [SEC-007], [TODO], [TODO], [TODO],
+  [SEC-008], [TODO], [TODO], [TODO],
+  [SEC-009], [TODO], [TODO], [TODO],
+  [SEC-010], [TODO], [TODO], [TODO],
+  [SEC-011], [TODO], [TODO], [TODO],
+  [SEC-012], [TODO], [TODO], [TODO],
+)
+
+// TODO：插入安全性测试截图
+// #image("images/test/sec_sql_inject.png", width: 80%)
+// #image("images/test/sec_xss.png", width: 80%)
+// #image("images/test/sec_forbidden.png", width: 80%)
+
+#pagebreak()
+
+// ==================== 第7章 性能测试 ====================
+
+= 性能测试
+
+== 测试简介
+
+不同于功能测试，性能测试的重点不是正确性，而是系统的执行效率。本次性能测试的目的是测试#system-name #subsystem-name 的承载能力，主要包括：
+
++ 系统对大量并发请求的处理能力；
++ 大规模用户同时发送请求时系统的最大负载能力与响应时间；
++ 审计日志大数据量（10 万条）查询与 CSV 导出的响应效率；
++ 系统在压力后能否及时恢复并保持稳定运行。
+
+本次性能测试使用 Apache JMeter 或 Locust 作为主要测试工具。
+
+== 性能指标
+
+#table(
+  columns: (0.35fr, 0.2fr, 0.45fr),
+  [*指标*], [*目标值*], [*说明*],
+  [登录接口响应时间（P95）], [< 500ms], [含 bcrypt 密码验证耗时],
+  [股票列表查询响应时间（P95）], [< 300ms], [含 TRADE 代理调用耗时],
+  [审计日志查询响应时间（10万条，P95）], [< 1s], [分页查询含索引，返回第1页],
+  [CSV 导出时间（10万条）], [< 5s], [流式输出，内存可控],
+  [并发登录 QPS], [≥ 50 QPS 无错误], [连接池 pool_size=10, max_overflow=20],
+  [并发混合操作 QPS], [≥ 30 QPS], [查行情 + 设涨跌停 + 查日志混合压测],
+)
+
+== 控制
+
+本次性能测试主要用到的自动化测试工具及辅助工具如下：
+
++ *Locust / Apache JMeter*：模拟多用户并发请求，测试系统在不同负载下的响应时间与吞吐量。
++ *Python 脚本*：辅助生成测试数据（批量创建操作日志 10万条）与解析测试结果。
++ *浏览器开发者工具（F12 Network 面板）*：辅助观察单次请求的响应时间与资源加载情况。
+
+Locust 测试计划配置：
++ 用户增长策略：逐步增加并发用户数（10、50、100、200），每个级别持续 60s；
++ 测试接口：POST /auth/login、GET /stocks、GET /audit/operation-logs、GET /audit/logs/export；
++ 监控指标：平均响应时间、中位数响应时间、P95 响应时间、吞吐量（QPS）、错误率。
+
+== 输入
+
+性能测试输入数据包括：
++ 预置的测试管理员账号（覆盖四种角色，来自 seed.py）；
++ 预置的股票代码列表（约 50 只股票，含 NORMAL 与 ST 类型）；
++ 预生成的操作日志与登录日志（约 10 万条，用于审计查询与导出性能测试）。
+
+== 压测场景
+
+#table(
+  columns: (0.25fr, 0.15fr, 0.15fr, 0.2fr, 0.25fr),
+  [*场景*], [*工具*], [*并发数*], [*持续时间*], [*验证指标*],
+  [登录接口压测], [Locust / wrk], [50], [60s], [P95 < 500ms，错误率 0%],
+  [股票查询压测], [Locust], [50], [60s], [P95 < 300ms]， [错误率 < 1%],
+  [混合操作压测（查行情+设涨跌停+查日志）], [Locust], [30], [120s], [P95 < 1s，无死锁],
+  [审计日志大数据量查询], [手工 + Locust], [10], [—], [10万条数据下分页查询 < 1s],
+  [CSV 大导出], [手工], [1], [—], [10万条导出 < 5s，内存不溢出],
+)
+
+== 测试结果
+
+=== 测试结果数据
+
+TODO：填入各接口在不同并发下的测试结果数据。
+
+#table(
+  columns: (0.15fr, 0.08fr, 0.12fr, 0.12fr, 0.12fr, 0.08fr, 0.08fr, 0.12fr, 0.13fr),
+  [*测试接口*], [*并发*], [*平均响应(ms)*], [*中位数(ms)*], [*P95(ms)*], [*QPS*], [*错误率*], [*是否达标*], [*备注*],
+  [POST /auth/login], [10], [TODO], [TODO], [TODO], [TODO], [TODO], [TODO], [TODO],
+  [], [50], [TODO], [TODO], [TODO], [TODO], [TODO], [TODO], [TODO],
+  [], [100], [TODO], [TODO], [TODO], [TODO], [TODO], [TODO], [TODO],
+  [], [200], [TODO], [TODO], [TODO], [TODO], [TODO], [TODO], [TODO],
+  [GET /stocks], [10], [TODO], [TODO], [TODO], [TODO], [TODO], [TODO], [TODO],
+  [], [50], [TODO], [TODO], [TODO], [TODO], [TODO], [TODO], [TODO],
+  [], [100], [TODO], [TODO], [TODO], [TODO], [TODO], [TODO], [TODO],
+  [GET /audit/operation-logs], [10], [TODO], [TODO], [TODO], [TODO], [TODO], [TODO], [TODO（10万条数据）],
+  [], [50], [TODO], [TODO], [TODO], [TODO], [TODO], [TODO], [TODO],
+  [GET /audit/logs/export], [1], [TODO], [TODO], [TODO], [TODO], [TODO], [TODO], [TODO（10万条CSV导出）],
+)
+
+=== 测试数据截图
+
+// TODO：插入性能测试结果截图（Locust 图表 / JMeter 报告）
+// #image("images/test/perf_locust_report.png", width: 90%)
+// #image("images/test/perf_response_graph.png", width: 90%)
+
+#pagebreak()
+
+// ==================== 第8章 其他模块接口测试 ====================
+
+= 其他模块接口测试
+
+== 测试简介
+
+本测试的目的主要是测试本子系统（ADMIN）与其他子系统及外部服务的接口是否完好，能否最后实现集成测试。接口测试主要涵盖以下方面：
+
++ *数据库接口*：ADMIN 后端与 MySQL `admin_db` 的 CRUD 操作的完整性与事务一致性；
++ *外部 API 接口*：ADMIN 后端调用 TRADE 子系统 REST API（行情、涨跌停、交易控制、交易日管理）的正确性与容错性；
++ *认证与权限接口*：JWT 令牌在各接口间的传递与校验，角色权限在各接口的生效情况。
+
+== 测试对象说明
+
+接口测试的对象包括 ADMIN 子系统对外提供的 REST API（共 18 个端点）以及 ADMIN 调用的 TRADE API（共 9 个端点），具体接口清单参见系统设计报告。
+
+测试重点验证：
++ 请求参数校验的正确性；
++ 响应数据格式（JSON）的规范性（snake_case 字段、ISO 8601 时间格式）；
++ 错误码与错误信息的准确性；
++ 跨子系统数据传递的一致性（如 ADMIN 设置涨跌停 → TRADE 保存并广播 → INFO/CLIENT 可见）。
+
+== 控制
+
+接口测试的控制方式如下：
+
++ *权限控制验证*：分别使用不同角色（NORMAL_ADMIN / SENIOR_ADMIN / SYSTEM_ADMIN / AUDIT_ADMIN）的 JWT 令牌调用各接口，验证权限隔离是否正确生效。
++ *数据流验证*：ADMIN 执行涨跌停设置、交易控制、交易日管理等操作后，通过 TRADE 的查询接口验证数据是否正确传递。
++ *异常场景验证*：模拟 TRADE 服务不可用（超时/500错误）的场景，验证 ADMIN 的容错处理（返回 502 + 缓存数据降级）。
+
+控制操作顺序：
+1. 以未认证状态调用所有需认证的接口，验证是否返回 401；
+2. 以普通管理员身份调用高级管理员专属接口，验证是否返回 403；
+3. 以高级管理员身份执行涨跌停设置，再到 TRADE 查询确认数据已保存；
+4. 以高级管理员身份执行交易暂停/重启，观察 TRADE 状态变化；
+5. 模拟 TRADE 服务超时，调用依赖 TRADE 的 ADMIN 接口，验证降级处理；
+6. 验证数据库操作的事务一致性（操作日志与实际操作同时成功/失败）。
+
+== 测试内容
+
+=== 数据库接口测试
+
+#table(
+  columns: (0.07fr, 0.18fr, 0.18fr, 0.22fr, 0.35fr),
+  [*编号*], [*测试项*], [*测试方法*], [*预期结果*], [*操作步骤*],
+  [IF-001], [数据库连接], [调用 /health 接口], [status=UP, dependencies.mysql=UP], [1) 调用 GET /health；2) 检查响应中的 mysql 状态。],
+  [IF-002], [数据库写入], [执行登录并检查 login_log 表], [login_log 表新增一条登录记录], [1) 调用 POST /auth/login；2) 查询 login_log 表确认记录写入且字段完整。],
+  [IF-003], [数据库事务], [执行涨跌停设置并检查 operation_log], [operation_log 新增记录，含完整信息], [1) 调用 PUT /limits；2) 查询 operation_log 表确认记录与传入参数一致。],
+  [IF-004], [外键约束], [尝试删除被引用的管理员], [数据库拒绝删除（ON DELETE RESTRICT）], [1) 直接操作数据库 DELETE FROM admin_info WHERE admin_id=X；2) 确认操作被拒绝。],
+  [IF-005], [连接池恢复], [短时间内大量并发请求], [连接池不会永久泄漏，请求完成后连接正常回收], [1) 发送超出 pool_size 的并发请求；2) 请求完成后检查活跃连接数。],
+)
+
+=== 外部 API 接口测试（ADMIN 调用 TRADE）
+
+#table(
+  columns: (0.07fr, 0.18fr, 0.18fr, 0.22fr, 0.35fr),
+  [*编号*], [*测试项*], [*测试方法*], [*预期结果*], [*操作步骤*],
+  [IF-006], [获取实时行情], [调用 GET /api/v1/trade/market/{stock_code}], [返回行情快照（latest_price, open_price, high, low, volume 等）], [1) 通过 ADMIN 查询单只股票行情；2) 验证返回数据格式与字段完整性。],
+  [IF-007], [批量获取行情], [调用 GET /api/v1/trade/market?stock_codes=], [返回多只股票的行情快照], [1) 传入 5 只股票代码；2) 验证返回 5 条行情数据。],
+  [IF-008], [设置涨跌停比例], [调用 PUT /api/v1/trade/stocks/{code}/limits], [TRADE 计算并返回涨停价与跌停价], [1) 通过 ADMIN 传比例参数；2) 验证 TRADE 返回的价格合法且计算正确。],
+  [IF-009], [暂停股票], [调用 POST /api/v1/trade/stocks/{code}/pause], [TRADE 执行暂停并返回确认], [1) 通过 ADMIN 发送暂停；2) 检查 TRADE 端股票状态变为 PAUSED。],
+  [IF-010], [重启股票], [调用 POST /api/v1/trade/stocks/{code}/resume], [TRADE 执行重启并返回确认], [1) 通过 ADMIN 发送重启；2) 检查 TRADE 端股票状态恢复为 OPEN。],
+  [IF-011], [交易日开始], [调用 POST /api/v1/trade/trading-days/open], [TRADE 启动撮合引擎并返回确认], [1) 通过 ADMIN 发起交易日开始；2) 验证撮合引擎启动。],
+  [IF-012], [交易日结束], [调用 POST /api/v1/trade/trading-days/close], [TRADE 停止撮合并返回确认], [1) 通过 ADMIN 发起交易日结束；2) 验证撮合停止、未成交指令过期。],
+  [IF-013], [TRADE 超时], [模拟 TRADE 接口超时（> 5s）], [ADMIN 返回 502 + "外部服务暂不可用"], [1) 设置 TRADE 模拟延迟 6s；2) 通过 ADMIN 调用依赖 TRADE 的接口；3) 验证超时处理。],
+  [IF-014], [TRADE 5xx 错误], [模拟 TRADE 返回 500], [ADMIN 返回 502 + 上游服务错误提示], [1) 配置模拟 TRADE 返回 500；2) 通过 ADMIN 调用；3) 验证错误传播与日志。],
+)
+
+=== 认证与权限接口测试
+
+#table(
+  columns: (0.07fr, 0.18fr, 0.18fr, 0.22fr, 0.35fr),
+  [*编号*], [*测试项*], [*测试方法*], [*预期结果*], [*操作步骤*],
+  [IF-015], [未认证访问], [不携带 JWT 令牌调用需认证的接口], [返回 401 COMMON_UNAUTHORIZED], [1) 不带 Authorization Header 调用 GET /stocks。],
+  [IF-016], [无效令牌访问], [携带过期或伪造的 JWT 令牌], [返回 401 COMMON_UNAUTHORIZED], [1) 手动构造过期 JWT；2) 携带该令牌调用接口。],
+  [IF-017], [跨角色权限隔离], [使用 NORMAL_ADMIN 令牌调用 SENIOR_ADMIN 专属接口], [返回 403 COMMON_FORBIDDEN], [1) 用 NORMAL_ADMIN 令牌调用 PUT /stocks/{code}/limits。],
+  [IF-018], [授权范围隔离], [普通管理员查询未授权股票], [返回空结果或权限错误], [1) 授权范围为["600000"]的管理员查询 000001 的行情。],
+  [IF-019], [令牌失效后访问], [密码修改后使用旧 token], [返回 401 COMMON_UNAUTHORIZED], [1) 登录；2) 修改密码；3) 使用旧令牌调用接口。],
+)
+
+== 测试结果汇总
+
+#table(
+  columns: (0.07fr, 0.41fr, 0.1fr, 0.42fr),
+  [*编号*], [*实际输出*], [*是否通过*], [*备注*],
+  [IF-001], [TODO], [TODO], [TODO],
+  [IF-002], [TODO], [TODO], [TODO],
+  [IF-003], [TODO], [TODO], [TODO],
+  [IF-004], [TODO], [TODO], [TODO],
+  [IF-005], [TODO], [TODO], [TODO],
+  [IF-006], [TODO], [TODO], [TODO],
+  [IF-007], [TODO], [TODO], [TODO],
+  [IF-008], [TODO], [TODO], [TODO],
+  [IF-009], [TODO], [TODO], [TODO],
+  [IF-010], [TODO], [TODO], [TODO],
+  [IF-011], [TODO], [TODO], [TODO],
+  [IF-012], [TODO], [TODO], [TODO],
+  [IF-013], [TODO], [TODO], [TODO],
+  [IF-014], [TODO], [TODO], [TODO],
+  [IF-015], [TODO], [TODO], [TODO],
+  [IF-016], [TODO], [TODO], [TODO],
+  [IF-017], [TODO], [TODO], [TODO],
+  [IF-018], [TODO], [TODO], [TODO],
+  [IF-019], [TODO], [TODO], [TODO],
+)
+
+// TODO：插入接口测试截图
+// #image("images/test/if_api_response.png", width: 85%)
+
+#pagebreak()
+
+// ==================== 第9章 对软件功能的结论 ====================
+
+= 对软件功能的结论
+
+== 认证功能
+
+=== 能力
+
+TODO：描述认证功能经过测试验证的能力：
++ 管理员凭用户名与密码成功登录，bcrypt 校验密码哈希；
++ JWT 令牌正确生成、校验与过期管理；
++ 登录失败计数与临时锁定机制（5次失败锁定5分钟）；
++ 锁定到期自动解锁恢复 active；
++ 禁用账号拒绝登录（403）；
++ 密码修改：原密码校验、新密码强度校验（长度 ≥ 8、至少含三类字符）、token_version 自增使旧 JWT 失效；
++ 登录成功/失败日志完整记录至 login_log 表。
+
+=== 限制
+
+TODO：
++ 当前未实现验证码机制，存在被自动化脚本暴力攻击的风险；
++ 当前未实现双因素认证（2FA）；
++ 锁定时间固定为5分钟，不支持系统管理员自定义配置；
++ 密码强度策略不支持自定义黑名单（如常见弱密码字典）。
+
+== 股票查看功能
+
+=== 能力
+
+TODO：描述股票查看功能经过测试验证的能力：
++ 普通管理员仅能查看授权范围内的股票（PERMISSIONS 控制）；
++ 高级管理员可查看全部股票（不受授权范围限制）；
++ 关键字搜索支持代码与名称的模糊匹配；
++ 实时行情与委托簿数据正常从 TRADE 获取并展示；
++ TRADE 服务不可用时返回 502 而非崩溃。
+
+=== 限制
+
+TODO：
++ 第一版采用每 5 秒 REST 轮询获取行情，非实时推送，存在行情延迟；
++ 委托簿数据为快照，并非实时订单簿流；
++ 不支持高级筛选（如按板块/行业/市值范围）。
+
+== 涨跌停设置功能
+
+=== 能力
+
+TODO：描述涨跌停设置功能经过测试验证的能力：
++ 高级管理员可对授权范围内的股票设置涨跌停比例；
++ 比例校验正确（普通股 ≤ 10%，ST 股 ≤ 5%），边界值测试通过；
++ TRADE 根据昨日收盘价和比例计算涨停价/跌停价并返回确认；
++ 支持指定生效日期，设置后提示"次日生效"；
++ 操作日志记录完整（含股票代码、比例、生效日期、TRADE 返回的价格）。
+
+=== 限制
+
+TODO：
++ 涨跌停设置次日生效，不支持盘中即时生效；
++ 批量设置时若某只失败不自动回滚已成功的设置。
+
+== 交易控制功能
+
+=== 能力
+
+TODO：描述交易控制功能（含交易日管理）经过测试验证的能力：
++ 高级管理员可对授权股票执行暂停/重启操作；
++ 状态冲突检测正常（不能暂停已暂停的股票、不能重启正常交易的股票）；
++ 交易日开始/结束功能正常，TRADE 端撮合引擎/资源释放正确执行；
++ 所有交易控制操作均产生 TRADE_CONTROL / TRADING_DAY 类型审计记录。
+
+=== 限制
+
+TODO：
++ 交易日管理缺少定时自动触发机制（如按交易时间自动开/收盘）；
++ 暂停/重启和交易日操作缺少批量执行能力。
+
+== 密码管理功能
+
+=== 能力
+
+TODO：描述密码管理功能经过测试验证的能力。
+
+=== 限制
+
+TODO。
+
+== 权限管理功能
+
+=== 能力
+
+TODO：描述权限管理功能经过测试验证的能力：
++ 系统管理员可查看所有管理员列表（含角色、状态、授权范围）；
++ 支持调整管理员角色（NORMAL ↔ SENIOR ↔ AUDIT）；
++ 支持调整授权股票范围（JSON 数组）；
++ 支持账号状态管理（active / locked / disabled）；
++ 禁用账号自动使该管理员的 token_version 自增，所有旧 JWT 失效；
++ 所有权限变更产生 PERMISSION 类型审计记录。
+
+=== 限制
+
+TODO：
++ 不支持细粒度的操作权限控制（如仅可查看不可修改特定模块）；
++ 授权股票范围不支持按板块或条件表达式配置。
+
+== 审计功能
+
+=== 能力
+
+TODO：描述审计功能经过测试验证的能力：
++ 操作日志与登录日志独立查询，均支持分页；
++ 支持按管理员、操作类型、时间范围多条件筛选；
++ 支持导出当前筛选结果为 CSV 文件；
++ 支持按日期删除旧日志（二次确认后执行）；
++ 审计管理员和系统管理员可访问审计功能，权限隔离正确。
+
+=== 限制
+
+TODO：
++ 日志不支持自动归档策略，需要手动导出后删除；
++ CSV 导出为全量字段，不支持自定义导出字段选择。
+
+#pagebreak()
+
+// ==================== 第10章 分析摘要 ====================
+
+= 分析摘要
+
+== 能力
+
+TODO：总结系统经过测试后确认具备的核心能力：
+
++ 本子系统实现了需求规格说明书中定义的全部功能模块（认证、股票查看、涨跌停设置、交易控制、交易日管理、密码管理、权限管理、审计），所有模块的核心功能均已通过测试验证；
++ 系统采用 RBAC 实现了四类管理员的权限隔离，各角色功能菜单与 API 访问权限正确生效；
++ 系统通过 TRADE API 成功实现了行情获取、涨跌停设置、交易控制与交易日管理的外部交互；
++ 系统在安全防护方面：JWT 认证机制有效、暴力破解防护到位、SQL 注入与 XSS 防护有效、角色权限边界清晰、无水平/垂直越权漏洞；
++ 密码管理实现了强度校验（长度 ≥ 8、至少含三类字符）与修改后 token_version 自增机制；
++ 审计模块实现了操作日志与登录日志的查看、多条件筛选、CSV 导出与按日期删除功能；
++ 健康检查端点可反映 MySQL 与 TRADE 的实时连通状态；
++ 错误处理统一：所有接口返回一致 JSON 格式的错误响应，错误码语义准确；
++ 异常容错：TRADE 不可用时返回 502 而非崩溃，连接池可自动恢复，不存在连接泄漏。
+
+== 缺陷和限制
+
+TODO：总结测试过程中发现的缺陷和限制。
+
+#table(
+  columns: (0.07fr, 0.3fr, 0.1fr, 0.1fr, 0.43fr),
+  [*编号*], [*缺陷描述*], [*严重程度*], [*状态*], [*备注*],
+  [TODO], [TODO], [TODO], [TODO], [TODO],
+)
+
+系统级限制：
++ *性能限制*：第一版采用每 5 秒 REST 轮询获取行情，非实时推送，存在行情延迟；
++ *功能限制*：未实现验证码、双因素认证（2FA）等更高级的安全措施；
++ *外部依赖风险*：TRADE 服务不可用时，行情查询和交易控制功能降级（缓存过期后不可用）；
++ *运维限制*：日志不自动归档，需审计管理员手动导出后删除。
+
+== 测试资源消耗
+
+TODO：总结测试过程中的资源消耗：
+
++ *人力消耗*：测试计划与用例编写 X 人时，测试执行 X 人时，缺陷追踪与回归测试 X 人时；
++ *时间消耗*：从预备阶段到回归测试完成，累计 X 天；
++ *工具资源*：Postman（API 测试）、Locust / JMeter（压力测试）、pytest + httpx（集成测试）、浏览器开发者工具（前端调试）；
++ *测试数据*：共编写 X 个测试用例（功能测试 Y 个 + 边界值测试 Z 个 + 安全测试 12 个 + 接口测试 19 个 + 前端测试 18 个），覆盖 8 个后端模块 + 7 个前端页面，发现 Z 个缺陷。
+
+== 测试完成标准
+
+以下为建议的测试完成标准，实际达标情况以勾选为准：
+
+#table(
+  columns: (0.1fr, 0.9fr),
+  [*状态*], [*标准*],
+  [[TODO]], [P0 用例通过率 100%],
+  [[TODO]], [P1 用例通过率 ≥ 98%],
+  [[TODO]], [P2+P3 用例通过率 ≥ 95%],
+  [[TODO]], [无 Critical / Blocker 级别缺陷遗留],
+  [[TODO]], [后端代码覆盖率 ≥ 80%（核心业务逻辑 ≥ 90%）],
+  [[TODO]], [安全测试（SEC-001 ~ SEC-012）全部通过],
+  [[TODO]], [性能指标全部达标]，
+)
+
