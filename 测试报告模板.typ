@@ -305,7 +305,7 @@ ADMIN 子系统采用前后端分离的 B/S 架构。后端为 FastAPI + MySQL�
 // （占用位，后续插入测试拓扑图）
 // #image("images/test/test_topology.png", width: 80%)
 
-测试拓扑由以下组件构成：测试客户端（curl / pytest / 浏览器）→ ADMIN 服务（localhost:8000）→ MySQL 测试实例 + TRADE Mock 服务。
+测试拓扑由以下组件构成：测试客户端（curl / pytest / 浏览器）→ ADMIN 服务（localhost:8000）→ MySQL 测试实例 + TRADE 服务。
 
 === 依赖与配置
 
@@ -352,7 +352,7 @@ ADMIN 子系统采用前后端分离的 B/S 架构。后端为 FastAPI + MySQL�
 
   [模块接口测试],
   [测试与其他模块的接口是否完好，能否最后实现集成测试],
-  [运行本子系统，观察数据库里的数据变化，检查子系统间的交互；Mock TRADE 以隔离外部依赖。],
+  [运行本子系统，观察数据库里的数据变化，检查子系统间的交互，验证 TRADE 接口联调是否正常。],
 
   [安全性测试],
   [检测系统的安全防护能力],
@@ -437,7 +437,7 @@ ADMIN 子系统采用前后端分离的 B/S 架构。后端为 FastAPI + MySQL�
 测试登录、登出、密码修改及令牌管理等场景。
 
 #table(
-  columns: (2fr, 2fr, 2fr, 1fr, 3fr, 3fr, 5fr),
+  columns: (2.1fr, 2fr, 2fr, 1fr, 3fr, 3fr, 5fr),
   [*编号*], [*测试功能*], [*测试标题*], [*级别*], [*预置条件*], [*输入*], [*操作步骤与预期输出*],
   [AUTH-001],
   [管理员登录],
@@ -579,7 +579,7 @@ ADMIN 子系统采用前后端分离的 B/S 架构。后端为 FastAPI + MySQL�
 === 测试结果
 
 #table(
-  columns: (1fr, 5fr, 1fr, 5fr),
+  columns: (1.5fr, 5fr, 1fr, 5fr),
   [*编号*], [*实际输出*], [*是否通过*], [*备注*],
   [AUTH-001], [TODO], [TODO], [TODO],
   [AUTH-002], [TODO], [TODO], [TODO],
@@ -635,7 +635,7 @@ TODO：对认证模块的测试结果进行分析，说明哪些功能正常、�
 === 测试用例
 
 #table(
-  columns: (2fr, 2fr, 2fr, 1fr, 3fr, 3fr, 5fr),
+  columns: (2.4fr, 1.2fr, 2fr, 1fr, 4fr, 3fr, 5fr),
   [*编号*], [*测试功能*], [*测试标题*], [*级别*], [*预置条件*], [*输入*], [*操作步骤与预期输出*],
   [STOCK-001],
   [股票列表],
@@ -707,7 +707,8 @@ TODO：对认证模块的测试结果进行分析，说明哪些功能正常、�
   [高],
   [停止 TRADE 服务],
   [调用任意股票接口],
-  [操作步骤：停掉 TRADE 后通过 ADMIN 查询股票行情。\ 预期输出：返回错误码 ADMIN_UPSTREAM_ERROR（502）。],
+  [操作步骤：停掉 TRADE 后通过 ADMIN 查询股票行情。\ 预期输出：返回错误码
+    ADMIN \_UPSTREAM_ERROR（502）。],
 
   [STOCK-010],
   [异常容错],
@@ -721,7 +722,7 @@ TODO：对认证模块的测试结果进行分析，说明哪些功能正常、�
 === 测试结果
 
 #table(
-  columns: (1fr, 5fr, 1fr, 5fr),
+  columns: (1.6fr, 5fr, 1fr, 5fr),
   [*编号*], [*实际输出*], [*是否通过*], [*备注*],
   [STOCK-001], [TODO], [TODO], [TODO],
   [STOCK-002], [TODO], [TODO], [TODO],
@@ -766,21 +767,21 @@ TODO：对股票查看模块的测试结果进行分析。重点关注：
 === 测试用例
 
 #table(
-  columns: (2fr, 2fr, 2fr, 1fr, 3fr, 3fr, 5fr),
+  columns: (2.1fr, 2fr, 2fr, 1fr, 3.4fr, 3.2fr, 5fr),
   [*编号*], [*测试功能*], [*测试标题*], [*级别*], [*预置条件*], [*输入*], [*操作步骤与预期输出*],
   [LIMIT-001],
   [涨跌停设置],
   [高级管理员正常设置],
   [高],
   [SENIOR_ADMIN 登录，有股票权限],
-  [limit_up=0.10, limit_down=0.10],
+  [limit_up=0.10 , \ limit_down=0.10],
   [操作步骤：1) 选择股票；2) 输入涨跌幅比例各 10%；3) 提交。\ 预期输出：200，返回涨停价、跌停价（TRADE计算），提示次日生效。],
 
   [LIMIT-002],
   [权限校验],
   [普通管理员无权设置],
   [高],
-  [NORMAL_ADMIN 登录],
+  [NORMAL\_ ADMIN 登录],
   [PUT limits],
   [操作步骤：普通管理员尝试设置涨跌停。\ 预期输出：403，"仅高级管理员可设置涨跌停"。],
 
@@ -805,7 +806,7 @@ TODO：对股票查看模块的测试结果进行分析。重点关注：
   [普通股涨幅超过 10%],
   [高],
   [SENIOR_ADMIN 登录],
-  [limit_up_ratio=0.15],
+  [limit_up_ratio\ =0.15],
   [操作步骤：传入涨幅 15%。\ 预期输出：422，"涨跌停比例不得超过10%"。],
 
   [LIMIT-006],
@@ -813,7 +814,7 @@ TODO：对股票查看模块的测试结果进行分析。重点关注：
   [跌幅为 0],
   [高],
   [SENIOR_ADMIN 登录],
-  [limit_down_ratio=0],
+  [limit_down_ratio\ =0],
   [操作步骤：传入跌幅 0。\ 预期输出：422。],
 
   [LIMIT-007],
@@ -852,7 +853,7 @@ TODO：对股票查看模块的测试结果进行分析。重点关注：
 === 测试结果
 
 #table(
-  columns: (1fr, 5fr, 1fr, 5fr),
+  columns: (1.5fr, 5fr, 1fr, 5fr),
   [*编号*], [*实际输出*], [*是否通过*], [*备注*],
   [LIMIT-001], [TODO], [TODO], [TODO],
   [LIMIT-002], [TODO], [TODO], [TODO],
@@ -898,7 +899,7 @@ TODO：对涨跌停设置模块的测试结果进行分析。重点关注：
 === 测试用例
 
 #table(
-  columns: (2fr, 2fr, 2fr, 1fr, 3fr, 3fr, 5fr),
+  columns: (2fr, 2fr, 2fr, 1fr, 3.7fr, 3fr, 5fr),
   [*编号*], [*测试功能*], [*测试标题*], [*级别*], [*预置条件*], [*输入*], [*操作步骤与预期输出*],
   [CTRL-001],
   [交易暂停],
@@ -962,13 +963,13 @@ TODO：对涨跌停设置模块的测试结果进行分析。重点关注：
   [中],
   [停止 TRADE],
   [POST /stocks/600000/pause],
-  [操作步骤：TRADE 停止时执行暂停。\ 预期输出：返回 ADMIN_UPSTREAM_ERROR（502）。],
+  [操作步骤：TRADE 停止时执行暂停。\ 预期输出：返回\ ADMIN_UPSTREAM\_ ERROR（502）。],
 )
 
 === 测试结果
 
 #table(
-  columns: (1fr, 5fr, 1fr, 5fr),
+  columns: (1.4fr, 5fr, 1fr, 5fr),
   [*编号*], [*实际输出*], [*是否通过*], [*备注*],
   [CTRL-001], [TODO], [TODO], [TODO],
   [CTRL-002], [TODO], [TODO], [TODO],
@@ -1008,7 +1009,7 @@ TODO：对交易控制模块的测试结果进行分析。
 === 测试用例
 
 #table(
-  columns: (2fr, 2fr, 2fr, 1fr, 3fr, 3fr, 5fr),
+  columns: (2fr, 2fr, 2fr, 1fr, 3.8fr, 3fr, 5fr),
   [*编号*], [*测试功能*], [*测试标题*], [*级别*], [*预置条件*], [*输入*], [*操作步骤与预期输出*],
   [TD-001],
   [交易日管理],
@@ -1097,7 +1098,7 @@ TODO：对交易日管理模块的测试结果进行分析。
 本模块的测试用例已包含在认证模块中（AUTH-011 至 AUTH-015），此处进行补充汇总。
 
 #table(
-  columns: (2fr, 2fr, 2fr, 1fr, 3fr, 3fr, 5fr),
+  columns: (1.6fr, 1.3fr, 2fr, 1fr, 1.5fr, 3fr, 5fr),
   [*编号*], [*测试功能*], [*测试标题*], [*级别*], [*预置条件*], [*输入*], [*操作步骤与预期输出*],
   [PWD-001],
   [密码修改],
@@ -1127,7 +1128,7 @@ TODO：对交易日管理模块的测试结果进行分析。
 === 测试结果
 
 #table(
-  columns: (1fr, 5fr, 1fr, 5fr),
+  columns: (1.3fr, 5fr, 1fr, 5fr),
   [*编号*], [*实际输出*], [*是否通过*], [*备注*],
   [PWD-001], [TODO], [TODO], [TODO],
   [PWD-002], [TODO], [TODO], [TODO],
@@ -1161,13 +1162,13 @@ TODO：对密码管理模块的测试结果进行分析。
 === 测试用例
 
 #table(
-  columns: (2fr, 2fr, 2fr, 1fr, 3fr, 3fr, 5fr),
+  columns: (1.9fr, 1.2fr, 1.5fr, 1fr, 3fr, 3.2fr, 5fr),
   [*编号*], [*测试功能*], [*测试标题*], [*级别*], [*预置条件*], [*输入*], [*操作步骤与预期输出*],
   [PERM-001],
   [管理员列表],
   [系统管理员查看所有管理员],
   [高],
-  [SYSTEM_ADMIN 登录],
+  [SYSTEM\_ ADMIN 登录],
   [GET /admins],
   [操作步骤：系统管理员进入权限管理页面。\ 预期输出：返回所有管理员信息，含角色、状态、授权股票、最后登录时间。],
 
@@ -1175,7 +1176,7 @@ TODO：对密码管理模块的测试结果进行分析。
   [权限校验],
   [非系统管理员无权查看],
   [高],
-  [NORMAL_ADMIN / SENIOR_ADMIN 登录],
+  [NORMAL\_ ADMIN / SENIOR\_ ADMIN 登录],
   [GET /admins],
   [操作步骤：非系统管理员尝试访问。\ 预期输出：403。],
 
@@ -1183,31 +1184,32 @@ TODO：对密码管理模块的测试结果进行分析。
   [权限修改],
   [修改管理员角色],
   [高],
-  [SYSTEM_ADMIN 登录],
-  [PUT /admins/{id}/permissions，role=NORMAL→SENIOR],
+  [SYSTEM\_ ADMIN 登录],
+  [PUT /admins/{id}/permissions，\
+    role=NORMAL→\ SENIOR],
   [操作步骤：1) 选择某管理员；2) 将其角色从普通管理员调整为高级管理员；3) 提交。\ 预期输出：200，"权限更新成功"。操作日志写入变更前后值。],
 
   [PERM-004],
   [权限修改],
   [修改管理员状态(禁用)],
   [高],
-  [SYSTEM_ADMIN 登录],
-  [PUT status=active→disabled],
+  [SYSTEM\_ ADMIN 登录],
+  [PUT status= active → disabled],
   [操作步骤：1) 选择某管理员；2) 将其状态改为 disabled；3) 提交。\ 预期输出：200，该管理员 token_version+1，旧令牌全部失效。],
 
   [PERM-005],
   [权限修改],
   [修改股票授权范围],
   [高],
-  [SYSTEM_ADMIN 登录],
-  [PUT authorized_stocks=["600000","000001"]],
+  [SYSTEM\_ ADMIN 登录],
+  [PUT authorized\_ stocks =["600000","000001"]],
   [操作步骤：1) 选择某普通管理员；2) 调整授权股票代码列表；3) 提交。\ 预期输出：200，授权范围更新成功。],
 
   [PERM-006],
   [异常处理],
   [目标管理员不存在],
   [中],
-  [SYSTEM_ADMIN 登录],
+  [SYSTEM\_ ADMIN 登录],
   [PUT /admins/999/permissions],
   [操作步骤：对不存在的 admin_id 执行修改。\ 预期输出：404，"目标管理员不存在"。],
 
@@ -1215,15 +1217,15 @@ TODO：对密码管理模块的测试结果进行分析。
   [参数校验],
   [无效角色],
   [中],
-  [SYSTEM_ADMIN 登录],
-  [role="INVALID_ROLE"],
+  [SYSTEM\_ ADMIN 登录],
+  [role=\ "INVALID_ROLE"],
   [操作步骤：传入不存在的角色值。\ 预期输出：422，"无效角色"。],
 
   [PERM-008],
   [参数校验],
   [无效状态],
   [中],
-  [SYSTEM_ADMIN 登录],
+  [SYSTEM\_ ADMIN 登录],
   [status="unknown"],
   [操作步骤：传入不合法的状态值。\ 预期输出：422，"无效状态"。],
 
@@ -1231,7 +1233,7 @@ TODO：对密码管理模块的测试结果进行分析。
   [权限校验],
   [修改自身权限],
   [中],
-  [SYSTEM_ADMIN 登录],
+  [SYSTEM\_ ADMIN 登录],
   [修改自己的 permissions],
   [操作步骤：尝试编辑自己的角色或状态。\ 预期输出：根据业务规则（允许或拒绝），需明确设计意图。],
 
@@ -1247,7 +1249,7 @@ TODO：对密码管理模块的测试结果进行分析。
 === 测试结果
 
 #table(
-  columns: (1fr, 5fr, 1fr, 5fr),
+  columns: (1.6fr, 5fr, 1fr, 5fr),
   [*编号*], [*实际输出*], [*是否通过*], [*备注*],
   [PERM-001], [TODO], [TODO], [TODO],
   [PERM-002], [TODO], [TODO], [TODO],
@@ -1291,7 +1293,7 @@ TODO：对权限管理模块的测试结果进行分析。
 === 测试用例
 
 #table(
-  columns: (2fr, 2fr, 2fr, 1fr, 3fr, 3fr, 5fr),
+  columns: (2.3fr, 1fr, 1.5fr, 1fr, 3.4fr, 3fr, 5fr),
   [*编号*], [*测试功能*], [*测试标题*], [*级别*], [*预置条件*], [*输入*], [*操作步骤与预期输出*],
   [AUDIT-001],
   [操作日志],
@@ -1330,7 +1332,7 @@ TODO：对权限管理模块的测试结果进行分析。
   [按操作类型筛选],
   [高],
   [有多条日志],
-  [GET ?operation_type=LIMIT_SET],
+  [GET ?\ operation_type \ = \ LIMIT_SET],
   [操作步骤：选择"涨跌停设置"类型后查询。\ 预期输出：仅返回 LIMIT_SET 类型的日志。],
 
   [AUDIT-006],
@@ -1346,7 +1348,7 @@ TODO：对权限管理模块的测试结果进行分析。
   [正常分页],
   [中],
   [超过 20 条日志],
-  [GET ?page=2&page_size=10],
+  [GET ?page=2\ &page_size=10],
   [操作步骤：切换到第2页。\ 预期输出：返回第2页数据，每页10条。],
 
   [AUDIT-008],
@@ -1354,7 +1356,7 @@ TODO：对权限管理模块的测试结果进行分析。
   [分页边界],
   [低],
   [数据不足一页],
-  [GET ?page=1&page_size=100],
+  [GET ?page=1\ &page_size=100],
   [操作步骤：请求超过实际数据量的 page_size。\ 预期输出：正常返回（page_size 上限100），不报错。],
 
   [AUDIT-009],
@@ -1370,7 +1372,7 @@ TODO：对权限管理模块的测试结果进行分析。
   [导出操作日志],
   [中],
   [有操作日志数据],
-  [GET /audit/logs/export?log_type=operation],
+  [GET /audit/logs/export?log_type\ =operation],
   [操作步骤：点击"导出操作日志"按钮。\ 预期输出：下载 CSV 文件，字段完整。],
 
   [AUDIT-011],
@@ -1394,7 +1396,7 @@ TODO：对权限管理模块的测试结果进行分析。
   [删除操作日志],
   [中],
   [有可删除的日志],
-  [DELETE /audit/logs?log_type=operation&before=...],
+  [DELETE /audit/logs?log_type\ =operation\ &before=...],
   [操作步骤：1) 指定日期；2) 二次确认后删除。\ 预期输出：返回"已删除N条日志"，被删除日志不可恢复。],
 
   [AUDIT-014],
@@ -1402,7 +1404,7 @@ TODO：对权限管理模块的测试结果进行分析。
   [按日期指定删除范围],
   [中],
   [有多条跨日期日志],
-  [DELETE ?log_type=login&before=2026-01-01],
+  [DELETE ?\ log_type=login&\ before=\ 2026-01-01],
   [操作步骤：指定 before 参数删除旧日志。\ 预期输出：仅删除 before 日期之前的登录日志。],
 
   [AUDIT-015],
@@ -1425,7 +1427,7 @@ TODO：对权限管理模块的测试结果进行分析。
 === 测试结果
 
 #table(
-  columns: (1fr, 5fr, 1fr, 5fr),
+  columns: (1.6fr, 5fr, 1fr, 5fr),
   [*编号*], [*实际输出*], [*是否通过*], [*备注*],
   [AUDIT-001], [TODO], [TODO], [TODO],
   [AUDIT-002], [TODO], [TODO], [TODO],
@@ -1492,7 +1494,7 @@ TODO：对审计日志模块的测试结果进行分析。重点关注：
   [高],
   [停止 MySQL],
   [GET /health],
-  [操作步骤：停掉 MySQL 后调用。\ 预期输出：503，status=DEGRADED，dependencies.mysql=DOWN。],
+  [操作步骤：停掉 MySQL 后调用。\ 预期输出：503，status=DEGRADED，\ dependencies.\ mysql=DOWN。],
 
   [HC-003],
   [健康检查],
@@ -1500,7 +1502,7 @@ TODO：对审计日志模块的测试结果进行分析。重点关注：
   [高],
   [停止 TRADE],
   [GET /health],
-  [操作步骤：停掉 TRADE 后调用。\ 预期输出：503，status=DEGRADED，dependencies.trade=DOWN。],
+  [操作步骤：停掉 TRADE 后调用。\ 预期输出：503，status=DEGRADED，\ dependencies.trade=DOWN。],
 
   [HC-004],
   [健康检查],
@@ -1617,7 +1619,7 @@ TODO：对健康检查模块的测试结果进行分析。
 === 测试结果
 
 #table(
-  columns: (1fr, 5fr, 1fr, 5fr),
+  columns: (1.3fr, 5fr, 1fr, 5fr),
   [*编号*], [*实际输出*], [*是否通过*], [*备注*],
   [BND-001], [TODO], [TODO], [TODO],
   [BND-002], [TODO], [TODO], [TODO],
@@ -1645,7 +1647,7 @@ TODO：对认证模块的边界值测试结果进行分析。
 === 测试用例
 
 #table(
-  columns: (2fr, 2fr, 2fr, 1fr, 3fr, 3fr, 5fr),
+  columns: (2fr, 1.5fr, 2fr, 1fr, 3.3fr, 3fr, 5fr),
   [*编号*], [*测试功能*], [*测试标题*], [*级别*], [*预置条件*], [*输入*], [*操作步骤与预期输出*],
   [BND-009],
   [比例边界],
@@ -1699,7 +1701,7 @@ TODO：对认证模块的边界值测试结果进行分析。
 === 测试结果
 
 #table(
-  columns: (1fr, 5fr, 1fr, 5fr),
+  columns: (1.3fr, 5fr, 1fr, 5fr),
   [*编号*], [*实际输出*], [*是否通过*], [*备注*],
   [BND-009], [TODO], [TODO], [TODO],
   [BND-010], [TODO], [TODO], [TODO],
@@ -1748,7 +1750,7 @@ TODO：对涨跌停设置模块的边界值测试结果进行分析。
   [关键字含 HTML 标签],
   [中],
   [管理员已登录],
-  [keyword=<script>alert(1)</script>],
+  [keyword=\<script\>alert(1)</script>],
   [操作步骤：输入 XSS 攻击向量。\ 预期输出：前端渲染时转义为纯文本，不执行脚本。],
 
   [BND-018],
@@ -1771,7 +1773,7 @@ TODO：对涨跌停设置模块的边界值测试结果进行分析。
 === 测试结果
 
 #table(
-  columns: (1fr, 5fr, 1fr, 5fr),
+  columns: (1.3fr, 5fr, 1fr, 5fr),
   [*编号*], [*实际输出*], [*是否通过*], [*备注*],
   [BND-015], [TODO], [TODO], [TODO],
   [BND-016], [TODO], [TODO], [TODO],
@@ -1802,7 +1804,7 @@ API 集成测试是本次测试的核心层次，使用 pytest + httpx 对 ADMIN
 + 统一响应格式校验；
 + JWT 认证与 RBAC 权限生效验证；
 + 数据库 CRUD 操作的完整性与事务一致性；
-+ 对 TRADE 外部服务的调用与异常处理（Mock TradeClient 以隔离外部依赖）。
++ 对 TRADE 外部服务的调用与异常处理。
 
 == 统一响应格式
 
@@ -1854,19 +1856,7 @@ tests/
   [`senior_token`], [预登录的 SENIOR_ADMIN JWT，用于高级管理员权限测试],
   [`system_token`], [预登录的 SYSTEM_ADMIN JWT，用于系统管理员权限测试],
   [`audit_token`], [预登录的 AUDIT_ADMIN JWT，用于审计管理员权限测试],
-  [`mock_trade_client`], [Mock TradeClient，隔离 TRADE 外部依赖，模拟正常返回/异常/超时等场景],
 )
-
-== TradeClient Mock 要点
-
-TRADE 服务为独立外部依赖，集成测试时建议 Mock `TradeClient`，覆盖以下场景：
-
-+ 正常返回行情数据（MarketQuote）；
-+ 正常返回涨跌停价格计算（limit_up_price, limit_down_price）；
-+ 模拟 `TradeClientError` 异常（TRADE 返回 4xx/5xx）；
-+ 模拟超时（`httpx.TimeoutException`）；
-+ 模拟连接失败（`httpx.ConnectError`）；
-+ 验证 ADMIN → TRADE 请求参数转换正确性。
 
 == 测试结果汇总
 
