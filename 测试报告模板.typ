@@ -628,6 +628,7 @@ TODO：对认证模块的测试结果进行分析，说明哪些功能正常、�
   columns: (1fr, 3fr, 2fr, 2fr),
   [*方法*], [*路径*], [*鉴权*], [*说明*],
   [GET], [`/api/v1/admin/stocks?keyword=`], [Bearer Token], [股票列表（支持关键字搜索）],
+  [POST], [`/api/v1/admin/stocks`], [Bearer Token (SENIOR_ADMIN)], [添加新股票（转发 TRADE）],
   [GET], [`/api/v1/admin/stocks/{code}/quote`], [Bearer Token], [单只股票实时行情],
   [GET], [`/api/v1/admin/stocks/{code}/order-book`], [Bearer Token], [委托簿（买卖盘口）],
 )
@@ -717,6 +718,30 @@ TODO：对认证模块的测试结果进行分析，说明哪些功能正常、�
   [模拟 TRADE 超时（>5s）],
   [调用任意股票接口],
   [操作步骤：设置 TRADE 响应延迟 >5s 后查询。\ 预期输出：返回"TRADE服务超时"或 502。],
+
+  [STOCK-011],
+  [添加股票],
+  [高级管理员添加新股票],
+  [高],
+  [SENIOR_ADMIN 登录，TRADE 可用],
+  [POST /stocks，stock_code=600036, stock_name=招商银行, previous_close_price=35.00],
+  [操作步骤：1) 点击"添加股票"；2) 填写股票代码、名称、类型、昨收价；3) 提交。\ 预期输出：200，返回创建成功的股票信息，含涨跌停价。],
+
+  [STOCK-012],
+  [添加股票],
+  [普通管理员无权添加],
+  [高],
+  [NORMAL_ADMIN 登录],
+  [POST /stocks 同上],
+  [操作步骤：普通管理员尝试添加股票。\ 预期输出：403，"仅高级管理员可添加股票"。],
+
+  [STOCK-013],
+  [添加股票],
+  [重复代码被拒绝],
+  [中],
+  [SENIOR_ADMIN 登录，股票已存在],
+  [POST /stocks，重复的 stock_code],
+  [操作步骤：对已存在的股票代码再次添加。\ 预期输出：409，TRADE 返回"股票已存在"。],
 )
 
 === 测试结果
@@ -734,6 +759,9 @@ TODO：对认证模块的测试结果进行分析，说明哪些功能正常、�
   [STOCK-008], [TODO], [TODO], [TODO],
   [STOCK-009], [TODO], [TODO], [TODO],
   [STOCK-010], [TODO], [TODO], [TODO],
+  [STOCK-011], [TODO], [TODO], [TODO],
+  [STOCK-012], [TODO], [TODO], [TODO],
+  [STOCK-013], [TODO], [TODO], [TODO],
 )
 
 === 测试结果分析
@@ -1156,6 +1184,7 @@ TODO：对密码管理模块的测试结果进行分析。
   columns: (1fr, 3fr, 2fr, 2fr),
   [*方法*], [*路径*], [*鉴权*], [*说明*],
   [GET], [`/api/v1/admin/admins`], [Bearer Token (SYSTEM_ADMIN)], [获取所有管理员列表],
+  [POST], [`/api/v1/admin/admins`], [Bearer Token (SYSTEM_ADMIN)], [创建新管理员],
   [PUT], [`/api/v1/admin/admins/{id}/permissions`], [Bearer Token (SYSTEM_ADMIN)], [修改管理员权限],
 )
 
@@ -1244,6 +1273,38 @@ TODO：对密码管理模块的测试结果进行分析。
   [任何权限变更成功],
   [—],
   [操作步骤：权限修改后查询 operation_log。\ 预期输出：新增 PERMISSION 记录，包含变更前后值。],
+
+  [PERM-011],
+  [创建管理员],
+  [系统管理员创建新管理员],
+  [高],
+  [SYSTEM_ADMIN 登录],
+  [POST /admins，username=new_admin, password=Pass@1234, role=NORMAL_ADMIN],
+  [操作步骤：1) 点击"新增管理员"；2) 填写用户名、密码、角色、授权范围；3) 提交。\ 预期输出：200，返回创建的管理员信息，可立即登录。],
+
+  [PERM-012],
+  [创建管理员],
+  [用户名已存在被拒绝],
+  [高],
+  [SYSTEM_ADMIN 登录，用户名已存在],
+  [POST /admins，username=normal_admin],
+  [操作步骤：对已存在的用户名创建。\ 预期输出：422，"用户名已存在"。],
+
+  [PERM-013],
+  [创建管理员],
+  [非系统管理员无权创建],
+  [高],
+  [NORMAL_ADMIN 登录],
+  [POST /admins],
+  [操作步骤：普通管理员尝试创建新管理员。\ 预期输出：403。],
+
+  [PERM-014],
+  [创建管理员],
+  [密码强度不足被拒绝],
+  [中],
+  [SYSTEM_ADMIN 登录],
+  [POST /admins，password=12345678],
+  [操作步骤：输入纯数字的密码。\ 预期输出：422，密码强度不足。],
 )
 
 === 测试结果
@@ -1261,6 +1322,10 @@ TODO：对密码管理模块的测试结果进行分析。
   [PERM-008], [TODO], [TODO], [TODO],
   [PERM-009], [TODO], [TODO], [TODO],
   [PERM-010], [TODO], [TODO], [TODO],
+  [PERM-011], [TODO], [TODO], [TODO],
+  [PERM-012], [TODO], [TODO], [TODO],
+  [PERM-013], [TODO], [TODO], [TODO],
+  [PERM-014], [TODO], [TODO], [TODO],
 )
 
 === 测试结果分析
