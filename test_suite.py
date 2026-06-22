@@ -429,12 +429,11 @@ class TestAudit:
         assert "items" in body["data"]
         assert "total" in body["data"]
 
-    def test_system_admin_can_query_audit(self, client, system_token):
-        """AUDIT-002: 系统管理员也可查询 → 200"""
+    def test_system_admin_blocked_from_audit(self, client, system_token):
+        """AUDIT-002: 系统管理员无权访问审计日志 → 403"""
         resp = client.get(f"{API}/audit/operation-logs",
             headers=make_auth(system_token))
-        assert resp.status_code == 200
-        assert resp.json()["success"] is True
+        assert resp.status_code == 403
 
     def test_normal_admin_blocked_from_audit(self, client, normal_token):
         """AUDIT-003: 普通管理员无权访问 → 403"""
