@@ -233,7 +233,10 @@
 
 === 架构概览
 
-// 架构图待补充
+#figure(
+  image("image/ADMIN架构图.png", width: 90%),
+  caption: [交易系统管理业务（ADMIN）系统架构图],
+)
 
 ADMIN 子系统采用前后端分离的 B/S 架构。后端为 FastAPI + MySQL，前端为 Vue 3 + Element Plus。ADMIN 通过 httpx 异步 HTTP 客户端调用 TRADE 的外部 API。测试时需要同时关注后端 API、前端页面以及 ADMIN ↔ TRADE 的集成交互。
 
@@ -301,9 +304,12 @@ ADMIN 子系统采用前后端分离的 B/S 架构。后端为 FastAPI + MySQL�
 
 === 测试拓扑
 
-// 测试拓扑图待补充
+#figure(
+  image("image/测试拓扑图.png", width: 90%),
+  caption: [交易系统管理业务（ADMIN）测试拓扑图],
+)
 
-测试拓扑由以下组件构成：测试客户端（curl / pytest / 浏览器）→ ADMIN 服务（localhost:8000）→ MySQL 测试实例 + TRADE 服务。
+测试拓扑由以下组件构成：测试客户端（curl / pytest / 浏览器）→ ADMIN 服务（localhost:8002）→ MySQL 测试实例 + TRADE 服务。
 
 === 依赖与配置
 
@@ -1890,7 +1896,7 @@ API 集成测试是本次测试的核心层次，使用 pytest + httpx 对 ADMIN
 
 == 统一响应格式
 
-所有 API 应遵循统一响应格式：
+业务 JSON API 遵循统一响应格式，健康检查与 CSV 导出除外:
 
 ```json
 {
@@ -1909,52 +1915,57 @@ API 集成测试是本次测试的核心层次，使用 pytest + httpx 对 ADMIN
 + `timestamp` 字段存在且为 ISO 8601 格式；
 + 列表类接口返回分页结构（`items`、`total`、`page`、`page_size`）。
 
-== 推荐测试脚本结构
+== 实际测试脚本结构
 
 ```
-tests/
-├── conftest.py              # fixtures: db session, test client, auth headers
-├── test_auth.py             # AUTH-001 ~ AUTH-017
-├── test_stocks.py           # STOCK-001 ~ STOCK-010
-├── test_limits.py           # LIMIT-001 ~ LIMIT-010
-├── test_trade_control.py    # CTRL-001 ~ CTRL-008
-├── test_trading_days.py     # TD-001 ~ TD-006
-├── test_permissions.py      # PERM-001 ~ PERM-010
-├── test_audit.py            # AUDIT-001 ~ AUDIT-016
-├── test_health.py           # HC-001 ~ HC-004
-└── factories/               # 测试数据工厂
-    ├── admin_factory.py
-    └── log_factory.py
+./conftest.py                # ADMIN_BASE_URL、HTTP client、登录 token fixture
+./test_suite.py              # ADMIN 子系统主要 API 自动化测试
+├── TestHealth               # 健康检查与依赖状态
+├── TestAuth*                # 登录、登出、Token、密码、当前用户、登录日志
+├── TestPermissions          # 管理员列表、创建、权限/状态修改
+├── TestAudit                # 操作日志、登录日志、筛选、导出、删除
+├── TestDatabase             # 密码哈希、外键、唯一索引、必要索引
+├── TestBoundaryAuth         # 认证与密码边界值
+├── TestStocks               # 股票列表、搜索、行情、委托簿、TRADE异常
+├── TestLimits               # 涨跌停设置与权限/参数校验
+├── TestTradeControl         # 股票暂停/重启
+└── TestTradingDays          # 交易日开启/结束
+./test_admin.py              # 手工/脚本辅助检查
+./perf_test.py               # 简化性能测试脚本
 ```
 
 == 关键 Test Fixture 设计
 
 #table(
   columns: 2,
-  [*Fixture*], [*作用*],
-  [`client`], [FastAPI TestClient (app)，提供同步 HTTP 测试能力],
-  [`db_session`], [独立测试数据库会话，每次测试后自动回滚，保证用例隔离],
+  [*Fixture / Helper*], [*作用*],
+  [`base_url`], [读取 `ADMIN_BASE_URL`，默认指向 `http://localhost:8002`],
+  [`client`], [基于 `httpx.Client` 的会话级 HTTP 客户端，用于访问 ADMIN 运行实例],
+  [`store`], [会话级 TokenStore，启动时登录四类管理员并缓存 JWT],
+  [`tokens`], [返回四类管理员当前 token 映射],
   [`normal_token`], [预登录的 NORMAL_ADMIN JWT，用于普通管理员权限测试],
   [`senior_token`], [预登录的 SENIOR_ADMIN JWT，用于高级管理员权限测试],
   [`system_token`], [预登录的 SYSTEM_ADMIN JWT，用于系统管理员权限测试],
   [`audit_token`], [预登录的 AUDIT_ADMIN JWT，用于审计管理员权限测试],
+  [`normal_admin_id`], [通过管理员列表查询 `normal_admin` 的 `admin_id`，供权限修改用例使用],
+  [`db_connect` / `db_unlock_user`], [可选数据库辅助函数，用于锁定/解锁等数据库级验证],
 )
 
 == 测试结果汇总
 
-全部133项测试用例均已通过自动化(pytest)或手动测试，通过率100%。无失败用例。
+按功能测试用例编号口径统计，共88项测试用例已通过自动化(pytest)或手动测试，通过率100%。无失败用例。
 
 #table(
   columns: (2fr, 1fr, 1fr, 1fr, 1fr),
-  [*测试文件*], [*用例总数*], [*通过*], [*失败*], [*通过率*],
-  [test_auth.py], [17], [17], [0], [100%],
-  [test_stocks.py], [13], [13], [0], [100%],
-  [test_limits.py], [10], [10], [0], [100%],
-  [test_trade_control.py], [8], [8], [0], [100%],
-  [test_trading_days.py], [6], [6], [0], [100%],
-  [test_permissions.py], [14], [14], [0], [100%],
-  [test_audit.py], [16], [16], [0], [100%],
-  [test_health.py], [4], [4], [0], [100%],
+  [*测试模块*], [*用例总数*], [*通过*], [*失败*], [*通过率*],
+  [认证模块], [17], [17], [0], [100%],
+  [股票查看模块], [13], [13], [0], [100%],
+  [涨跌停设置模块], [10], [10], [0], [100%],
+  [交易控制模块], [8], [8], [0], [100%],
+  [交易日管理模块], [6], [6], [0], [100%],
+  [权限管理模块], [14], [14], [0], [100%],
+  [审计日志模块], [16], [16], [0], [100%],
+  [健康检查模块], [4], [4], [0], [100%],
 )
 
 #pagebreak()
@@ -2597,4 +2608,3 @@ Locust 测试计划配置：
   [[（无待补充内容）]], [安全测试（SEC-001 ~ SEC-012）全部通过],
   [[（无待补充内容）]], [性能指标全部达标],
 )
-
