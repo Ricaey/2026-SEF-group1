@@ -1332,12 +1332,18 @@ ADMIN 子系统采用前后端分离的 B/S 架构。后端为 FastAPI + MySQL�
 === 测试结果截图
 
 #figure(
-  image("image/权限更改后表格更新.png", width: 80%),
-  caption: [权限管理编辑后列表自动刷新],
+  image("image/2.8截图/权限更改界面.png", width: 80%),
+  caption: [权限管理——编辑管理员角色、状态与授权股票],
 )
+
 #figure(
-  image("image/权限更改后表格更新.png", width: 80%),
-  caption: [权限管理——编辑保存后列表刷新],
+  image("image/2.8截图/权限更改后表格更新.png", width: 80%),
+  caption: [权限管理——保存后列表自动刷新],
+)
+
+#figure(
+  image("image/2.8截图/新增管理员界面.png", width: 80%),
+  caption: [权限管理——新增管理员],
 )
 
 #pagebreak()
