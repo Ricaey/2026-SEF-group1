@@ -1092,7 +1092,12 @@ ADMIN 子系统采用前后端分离的 B/S 架构。后端为 FastAPI + MySQL�
 === 测试结果截图
 
 #figure(
-  image("image/交易日结束二次确认.png", width: 70%),
+  image("image/2.6截图/交易日开启.png", width: 70%),
+  caption: [交易日管理——交易日开启],
+)
+
+#figure(
+  image("image/2.6截图/交易日结束二次确认.png", width: 70%),
   caption: [交易日管理——结束交易日二次确认弹窗],
 )
 
@@ -1155,17 +1160,21 @@ ADMIN 子系统采用前后端分离的 B/S 架构。后端为 FastAPI + MySQL�
 === 测试结果截图
 
 #figure(
-  grid(
-    columns: 3,
-    gutter: 0.5em,
-    image("image/密码强度引导——纯数字.png", width: 100%),
-    image("image/密码强度引导——两种字符.png", width: 100%),
-    image("image/密码强度引导——强度达标.png", width: 100%),
-  ),
-  caption: [密码强度指示器（纯数字 / 两种字符 / 强度达标）],
+  image("image/2.7截图/密码强度引导——纯数字.png", width: 80%),
+  caption: [密码强度指示——纯数字（弱）],
+)
+
+#figure(
+  image("image/2.7截图/密码强度引导——两种字符.png", width: 80%),
+  caption: [密码强度指示——两种字符（中）],
+)
+
+#figure(
+  image("image/2.7截图/密码强度引导——强度达标.png", width: 80%),
+  caption: [密码强度指示——强度达标（强）],
 )
 #figure(
-  image("image/修改密码二次确认不通过.png", width: 50%),
+  image("image/2.7截图/修改密码二次确认不通过.png", width: 80%),
   caption: [密码管理——确认密码不一致阻止提交],
 )
 
