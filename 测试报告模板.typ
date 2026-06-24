@@ -1598,10 +1598,10 @@ ADMIN 子系统采用前后端分离的 B/S 架构。后端为 FastAPI + MySQL�
 #table(
   columns: (1fr, 5fr, 1fr, 5fr),
   [*编号*], [*实际输出*], [*是否通过*], [*备注*],
-  [HC-001], [全部依赖正常 | 200, status=UP | 200, status=UP, mysql=UP, trade=UP], [通过], [],
-  [HC-002], [MySQL 不可用 | 503, mysql=DOWN | 503, DEGRADED, mysql=DOWN], [通过], [截图: MySQL不可用时健康检查],
-  [HC-003], [TRADE 不可用 | 503, trade=DOWN | 503, status=DEGRADED, trade=DOWN], [通过], [停掉 TRADE 后验证],
-  [HC-004], [全部依赖不可用 | 503, DEGRADED | 503, DEGRADED], [通过], [停掉全部依赖后验证],
+  [HC-001], [200, status=UP, mysql=UP, trade=UP], [通过], [截图: 2.10.5 MySQL和TRADE都正常启动],
+  [HC-002], [503, status=DEGRADED, mysql=DOWN], [通过], [截图: MySQL不可用时健康检查（HC-002）],
+  [HC-003], [503, status=DEGRADED, trade=DOWN], [通过], [截图: TRADE不可达],
+  [HC-004], [503, status=DEGRADED, mysql和trade均为DOWN], [通过], [截图: 2.10.5 MySQL和TRADE都关闭],
 )
 
 === 测试结果分析
@@ -1611,12 +1611,23 @@ ADMIN 子系统采用前后端分离的 B/S 架构。后端为 FastAPI + MySQL�
 === 测试结果截图
 
 #figure(
-  grid(
-    columns: 2,
-    gutter: 1em,
-    image("image/MySQL 不可用时健康检查（HC-002）.png", width: 100%), image("image/TRADE 不可达.png", width: 100%),
-  ),
-  caption: [健康检查——MySQL不可用(左) / TRADE不可达(右)],
+  image("image/2.10.5 MySQL和TRADE都正常启动.png", width: 80%),
+  caption: [HC-001：全部依赖正常——status=UP, mysql=UP, trade=UP],
+)
+
+#figure(
+  image("image/MySQL 不可用时健康检查（HC-002）.png", width: 80%),
+  caption: [HC-002：MySQL不可用——status=DEGRADED, mysql=DOWN],
+)
+
+#figure(
+  image("image/TRADE 不可达.png", width: 80%),
+  caption: [HC-003：TRADE不可达——status=DEGRADED, trade=DOWN],
+)
+
+#figure(
+  image("image/2.10.5 MySQL和TRADE都关闭.png", width: 80%),
+  caption: [HC-004：全部依赖不可用——status=DEGRADED],
 )
 
 #pagebreak()
