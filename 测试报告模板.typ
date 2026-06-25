@@ -590,8 +590,25 @@ ADMIN 子系统采用前后端分离的 B/S 架构。后端为 FastAPI + MySQL�
 
 === 测试结果截图
 
+#figure(
+  image("image/2.2截图/成功登录.png", width: 80%),
+  caption: [认证模块——成功登录返回JWT令牌],
+)
 
-// 无对应截图
+#figure(
+  image("image/2.2截图/登出二次确认.png", width: 80%),
+  caption: [认证模块——登出操作],
+)
+
+#figure(
+  image("image/2.2截图/成功修改密码.png", width: 80%),
+  caption: [认证模块——成功修改密码],
+)
+
+#figure(
+  image("image/2.2截图/失败五次系统锁定五分钟.png", width: 80%),
+  caption: [认证模块——连续五次失败触发账户锁定],
+)
 
 #pagebreak()
 
@@ -752,12 +769,23 @@ ADMIN 子系统采用前后端分离的 B/S 架构。后端为 FastAPI + MySQL�
 === 测试结果截图
 
 #figure(
-  grid(
-    columns: 2,
-    gutter: 1em,
-    image("image/股票详情查看.png", width: 100%),
-  ),
-  caption: [股票搜索筛选与详情查看],
+  image("image/2.3截图/NORMAL_ADMIN股票范围.png", width: 80%),
+  caption: [股票查看——NORMAL_ADMIN仅可见授权范围内的股票],
+)
+
+#figure(
+  image("image/2.3截图/SENIOR_ADMIN股票范围.png", width: 80%),
+  caption: [股票查看——SENIOR_ADMIN可查看全部股票],
+)
+
+#figure(
+  image("image/2.3截图/空值处理与模糊匹配.png", width: 80%),
+  caption: [股票查看——关键字搜索与空值处理],
+)
+
+#figure(
+  image("image/2.3截图/数据的字段完整性.png", width: 80%),
+  caption: [股票查看——行情数据字段完整性],
 )
 
 #pagebreak()
@@ -888,8 +916,18 @@ ADMIN 子系统采用前后端分离的 B/S 架构。后端为 FastAPI + MySQL�
 === 测试结果截图
 
 #figure(
-  image("image/涨跌停设置不填股票代码.png", width: 70%),
-  caption: [涨跌停设置表单校验],
+  image("image/2.4截图/TRADE 价格计算与返回的准确性.png", width: 80%),
+  caption: [涨跌停设置——TRADE价格计算与返回],
+)
+
+#figure(
+  image("image/2.4截图/normal_admin无权进行涨跌停设置.png", width: 80%),
+  caption: [涨跌停设置——普通管理员无权操作],
+)
+
+#figure(
+  image("image/2.4截图/超出边界时请求失败.png", width: 80%),
+  caption: [涨跌停设置——超出比例边界时请求被拒绝],
 )
 
 #pagebreak()
